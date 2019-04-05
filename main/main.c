@@ -13,6 +13,7 @@
 
 extern void task_test_pcd8544(void *ignore);
 //extern void task_scroll_text(void *ignore);
+extern void gps_clock_task(void *pvParameters);
 
 // On board LED for Blink is on GPIO 21
 #define LCD_LIGHT 5 // LCD Back Light
@@ -22,7 +23,7 @@ void app_main(void)
 {
 	//xTaskCreatePinnedToCore(&task_scroll_text, "task_simple_tests_pcd8544", 8048, NULL, 5, NULL, 0);
   xTaskCreatePinnedToCore(&task_test_pcd8544, "task_simple_tests_pcd8544", 8048, NULL, 5, NULL, 0);
-
+  xTaskCreate(gps_clock_task, "gps_clock_task", 4096, NULL, 5, NULL);
   // Button read snippet!
 //  gpio_pad_select_gpio(BTN);
 //  gpio_set_direction(BTN, GPIO_MODE_INPUT);
