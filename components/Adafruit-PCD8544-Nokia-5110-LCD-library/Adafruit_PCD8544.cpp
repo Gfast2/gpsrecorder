@@ -140,7 +140,7 @@ void Adafruit_PCD8544::begin(uint8_t contrast, uint8_t bias) {
 	bus_config.quadwp_io_num = -1; // Not used
 	bus_config.quadhd_io_num = -1; // Not used
 	ESP_LOGI(tag, "... Initializing bus.");
-	ESP_ERROR_CHECK(spi_bus_initialize(HSPI_HOST, &bus_config,0/*1*/));
+	ESP_ERROR_CHECK(spi_bus_initialize(HSPI_HOST, &bus_config,0/*1*/)); // It means, I do not init SPI bus again.
 	spi_device_interface_config_t dev_config;
 	dev_config.address_bits     = 0;
 	dev_config.command_bits     = 0;

@@ -25,6 +25,9 @@ All text above, and the splash screen must be included in any redistribution
 #include "msg_type.h"
 #include "main.h"
 
+//#include "sd_card.h"
+extern void sd_card_task(void *pvParameters);
+
 static char tag[] = "Display";
 
 #define NUMFLAKES 10
@@ -60,6 +63,7 @@ static void print(char *text) {
     display.write(*text);
     text++;
   }
+  display.write('\n');
 }
 
 static int min(int a, int b) {
@@ -75,20 +79,24 @@ extern "C" {
 void task_display_info(void *ignore) {
 	ESP_LOGW(tag, "task 'task_display_info'started");
 	bme280Info bInfo;
+	xTaskCreate(&sd_card_task, "task_sd_card", 8048, NULL, 5, NULL);
 	while(1) {
 		  if(xQueueReceive(bme280_queue, (void *)(&bInfo), (TickType_t)0) == pdTRUE) {
 		  display.clearDisplay();
-
+		  display.setTextSize(1);
+		  display.setTextColor(BLACK);
+		  print((char *)"Temperature:");
+		  display.setTextSize(2);
+		  display.setTextColor(WHITE, BLACK);
 		  char buffer[12];
-		  int ret = snprintf(buffer, sizeof buffer, "%f", bInfo.temperature);
-
-//		  if (ret < 0) {
-//		      return EXIT_FAILURE;
-//		  }
-//		  if (ret >= sizeof buffer) {
-//		      /* Result was truncated - resize the buffer and retry.*/
-//		  }
-
+		  int ret = snprintf(buffer, sizeof buffer, "%.2fC", bInfo.temperature);
+		  print(buffer);
+		  display.setTextSize(1);
+		  display.setTextColor(BLACK);
+		  print((char *)"Humidity:");
+		  display.setTextSize(2);
+		  display.setTextColor(WHITE, BLACK);
+		  ret = snprintf(buffer, sizeof buffer, "%.2f%%", bInfo.humidity);
 		  print(buffer);
 		  display.display();
 
@@ -96,10 +104,6 @@ void task_display_info(void *ignore) {
 	 					bInfo.temperature,
 	 					bInfo.pressure/100, // Pa -> hPa
 	 					bInfo.humidity);
-	//	  }
-	//		  ESP_LOGI(tag, "%f degC", (float)bInfo.temperature);
-	//		delay(1000);
-	//	  ESP_LOGI(tag, "hello");
 		  }
 	}
 // vTaskDelete(NULL);
@@ -108,25 +112,16 @@ void task_display_info(void *ignore) {
 void task_test_pcd8544(void *ignore)   {
   display.begin();
   display.setContrast(60);
-  ESP_LOGI(tag, "Draw characters ...");
-//  testdrawchar();
   display.display();
-  delay(1000);
+  delay(250); // Splash Photo
   display.clearDisplay();
   display.setCursor(0,0);
   display.setTextColor(WHITE, BLACK); // 'inverted' text
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
   display.setTextSize(2);
-  display.setTextColor(WHITE, BLACK); // 'inverted' text
-  display.setCursor(0,0);
-  print((char *)"temp: 37`C");
-  display.display();
-  display.clearDisplay();
+  ESP_LOGI(tag, "Display Initialization Task All done!");
 
-  // TODO: May be I'd like to trigger another task and let it pull the information later.
-
-  ESP_LOGI(tag, "Display Task All done!");
-
+  // trigger another task and let it pull the information later.
   xTaskCreate(&task_display_info, "task_display_info", 8048, NULL, 5, NULL);
   ESP_LOGW(tag, "Display init task ended");
   // TODO: Finish this task
