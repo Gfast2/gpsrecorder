@@ -26,7 +26,7 @@ All text above, and the splash screen must be included in any redistribution
 #include "main.h"
 
 //#include "sd_card.h"
-extern void sd_card_task(void *pvParameters);
+//extern void sd_card_task(void *pvParameters);
 
 static char tag[] = "Display";
 
@@ -79,7 +79,7 @@ extern "C" {
 void task_display_info(void *ignore) {
 	ESP_LOGW(tag, "task 'task_display_info'started");
 	bme280Info bInfo;
-	xTaskCreate(&sd_card_task, "task_sd_card", 8048, NULL, 5, NULL);
+//	xTaskCreate(&sd_card_task, "task_sd_card", 8048, NULL, 5, NULL);
 	while(1) {
 		  if(xQueueReceive(bme280_queue, (void *)(&bInfo), (TickType_t)0) == pdTRUE) {
 		  display.clearDisplay();

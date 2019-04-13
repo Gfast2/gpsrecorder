@@ -46,10 +46,6 @@ All text above, and the splash screen must be included in any redistribution
 #define PCD8544_SETBIAS 0x10
 #define PCD8544_SETVOP 0x80
 
-// Default to max SPI clock speed for PCD8544 of 4 mhz (16mhz / 4) for normal Arduinos.
-// This can be modified to change the clock speed if necessary (like for supporting other hardware).
-#define PCD8544_SPI_CLOCK_DIV SPI_CLOCK_DIV4
-
 class Adafruit_PCD8544 : public Adafruit_GFX {
  public:
   // Software SPI with explicit CS pin.

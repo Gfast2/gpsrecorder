@@ -140,7 +140,7 @@ void Adafruit_PCD8544::begin(uint8_t contrast, uint8_t bias) {
 	bus_config.quadwp_io_num = -1; // Not used
 	bus_config.quadhd_io_num = -1; // Not used
 	ESP_LOGI(tag, "... Initializing bus.");
-	ESP_ERROR_CHECK(spi_bus_initialize(HSPI_HOST, &bus_config,0/*1*/)); // It means, I do not init SPI bus again.
+	ESP_ERROR_CHECK(spi_bus_initialize(HSPI_HOST, &bus_config,0/*1*/)); // spi_bus_free() for "remove"
 	spi_device_interface_config_t dev_config;
 	dev_config.address_bits     = 0;
 	dev_config.command_bits     = 0;
@@ -149,14 +149,14 @@ void Adafruit_PCD8544::begin(uint8_t contrast, uint8_t bias) {
 	dev_config.duty_cycle_pos   = 0;
 	dev_config.cs_ena_posttrans = 0;
 	dev_config.cs_ena_pretrans  = 0;
-	dev_config.clock_speed_hz   = 100000; // 100KHz
+	dev_config.clock_speed_hz   = 800000; // 800KHz
 	dev_config.spics_io_num     = _cs;
 	dev_config.flags            = 0;
 	dev_config.queue_size       = 1;
 	dev_config.pre_cb           = NULL;
 	dev_config.post_cb          = NULL;
 	ESP_LOGI(tag, "... Adding device bus.");
-	ESP_ERROR_CHECK(spi_bus_add_device(HSPI_HOST, &dev_config, &spi_handle));
+	ESP_ERROR_CHECK(spi_bus_add_device(HSPI_HOST, &dev_config, &spi_handle)); // spi_bus_remove_device() for "remove"
 
   gpio_set_direction((gpio_num_t)_dc, GPIO_MODE_OUTPUT);
   if (_rst > 0) {
