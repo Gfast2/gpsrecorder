@@ -115,8 +115,10 @@ void BME280_delay_msek(u32 msek)
 	vTaskDelay(msek/portTICK_PERIOD_MS);
 }
 
-void task_bme280_normal_mode(void *ignore)
+void task_bme280_normal_mode(void *pvParameters)
 {
+  int tmp = *((int * )pvParameters);
+  ESP_LOGI(TAG_BME280, "Parameter is :%d", tmp );
 	struct bme280_t bme280 = {
 		.bus_write = BME280_I2C_bus_write,
 		.bus_read = BME280_I2C_bus_read,
@@ -140,7 +142,7 @@ void task_bme280_normal_mode(void *ignore)
 
 	com_rslt += bme280_set_power_mode(BME280_NORMAL_MODE);
 	if (com_rslt == SUCCESS) {
-		while(true) {
+		while( (*((int *)pvParameters) ) == 1) {
 			vTaskDelay(100/portTICK_PERIOD_MS);
 
 			com_rslt = bme280_read_uncomp_pressure_temperature_humidity(
@@ -166,6 +168,7 @@ void task_bme280_normal_mode(void *ignore)
 		ESP_LOGE(TAG_BME280, "init or setting error. code: %d", com_rslt);
 	}
 
+	ESP_LOGI(TAG_BME280, "bme280 Task get terminated");
 	vTaskDelete(NULL);
 }
 
@@ -236,33 +239,47 @@ void app_main(void)
   }
 	//xTaskCreatePinnedToCore(&task_scroll_text, "task_simple_tests_pcd8544", 8048, NULL, 5, NULL, 0);
   i2c_master_init();
-  xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, NULL, 6, NULL);
+//  TaskHandle_t xHandle_bme280;
+  int loopholder_bme280 = 1;
+  int loopholder_display = 1;
+  xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
 //  xTaskCreate(gps_clock_task, "task_gps", 4096, NULL, 5, NULL); // Comment back if I got both SD & Display works together
 //  xTaskCreate(&sd_card_task, "sd_card_task", 8048, NULL, 5, NULL); // Remove this task when test SD card works correctly
-  xTaskCreate(&task_test_pcd8544, "task_pcd8544_display", 8048, NULL, 5, NULL);
-
-
-  // Button read snippet!
-//  gpio_pad_select_gpio(BTN);
-//  gpio_set_direction(BTN, GPIO_MODE_INPUT);
-//  gpio_pad_select_gpio(LCD_LIGHT);
-//  gpio_set_direction(LCD_LIGHT, GPIO_MODE_OUTPUT);
-//  while(1) {
-//	  int result = gpio_get_level(BTN);
-//	  printf(". %d\n", result);
-//	  vTaskDelay(100 / portTICK_PERIOD_MS);
-//  }
+  xTaskCreate(&task_test_pcd8544, "task_pcd8544_display", 8048, &loopholder_display, 5, NULL);
+//  xTaskCreate( vTaskCode, "NAME", STACK_SIZE, NULL, tskIDLE_PRIORITY, &xHandle );
 
   gpio_pad_select_gpio(LCD_LIGHT);
   gpio_set_direction(LCD_LIGHT, GPIO_MODE_OUTPUT);
-//  while(1) {
-//	  printf("Turning off the LCD Light\n");
-//	  gpio_set_level(LCD_LIGHT, 0);
-//	  vTaskDelay(1000 / portTICK_PERIOD_MS);
-//	  printf("Turning on the LCD Light\n");
-	  gpio_set_level(LCD_LIGHT, 1);
-//	  vTaskDelay(1000 / portTICK_PERIOD_MS);
-//  }
+  gpio_set_level(LCD_LIGHT, 1);
+
+  // Button read snippet!
+  gpio_pad_select_gpio(BTN);
+  gpio_set_direction(BTN, GPIO_MODE_INPUT);
+  gpio_pad_select_gpio(LCD_LIGHT);
+  gpio_set_direction(LCD_LIGHT, GPIO_MODE_OUTPUT);
+  int btn_old = 0;
+  int btn_now = 0;
+  while(1) {
+    btn_now = gpio_get_level(BTN);
+//    ESP_LOGI(TAG, "BTN: %d", btn_now);
+    if(btn_now != btn_old){
+//      ESP_LOGI(TAG, "Get New State");
+      btn_old = btn_now;
+      if(btn_now == 1){
+        ESP_LOGI(TAG, "BTN get pressed down.");
+        // TODO: Here I stop temperature reading Task
+//        vTaskDelete( xHandle_bme280 ); // TODO: free in this task located heap memory
+        loopholder_bme280 = 0; // This will cause the bme280 task go out of its while loop.
+        // TODO: Here I stop Display Task
+        loopholder_display = 0;
+        // TODO: Here I Start SD Card Task, write Hello to the file
+        // TODO: Here I read the right now coordinate to the SD Card
+      }
+    } else {
+//      ESP_LOGI(TAG, "Old State");
+    }
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
 
   printf("the damme esp32's main reach end!\n");
 }

@@ -34,7 +34,7 @@ All text above, and the splash screen below must be included in any redistributi
 #include "Adafruit_PCD8544.h"
 #include "sdkconfig.h"
 
-static char tag[] = "Adafruit_PCD8544";
+static char TAG[] = "ADAFRUIT_PCD8544";
 
 // my own test
 uint8_t pcd8544_buffer[LCDWIDTH * LCDHEIGHT / 8] = {
@@ -74,7 +74,7 @@ Adafruit_PCD8544::Adafruit_PCD8544( int8_t SCLK, int8_t DIN, int8_t DC, int8_t C
   _dc   = DC;
   _rst  = RST;
   _cs   = CS;
-  ESP_LOGD(tag, "CS: %d, MOSI: %d, SCLK: %d, DC: %d, RST: %d",
+  ESP_LOGD(TAG, "CS: %d, MOSI: %d, SCLK: %d, DC: %d, RST: %d",
   	_cs, _din, _sclk, _dc, _rst
   );
 }
@@ -132,14 +132,14 @@ uint8_t Adafruit_PCD8544::getPixel(int8_t x, int8_t y) {
 
 void Adafruit_PCD8544::begin(uint8_t contrast, uint8_t bias) {
 
-	ESP_LOGI(tag, "test abcd: _sclk: %d, _din: %d", _sclk, _din);
+	ESP_LOGI(TAG, "test abcd: _sclk: %d, _din: %d", _sclk, _din);
 	spi_bus_config_t bus_config;
 	bus_config.sclk_io_num   = _sclk; // CLK
 	bus_config.mosi_io_num   = _din; // MOSI
 	bus_config.miso_io_num   = -1; // MISO
 	bus_config.quadwp_io_num = -1; // Not used
 	bus_config.quadhd_io_num = -1; // Not used
-	ESP_LOGI(tag, "... Initializing bus.");
+	ESP_LOGI(TAG, "... Initializing bus.");
 	ESP_ERROR_CHECK(spi_bus_initialize(HSPI_HOST, &bus_config,0/*1*/)); // spi_bus_free() for "remove"
 	spi_device_interface_config_t dev_config;
 	dev_config.address_bits     = 0;
@@ -155,7 +155,7 @@ void Adafruit_PCD8544::begin(uint8_t contrast, uint8_t bias) {
 	dev_config.queue_size       = 1;
 	dev_config.pre_cb           = NULL;
 	dev_config.post_cb          = NULL;
-	ESP_LOGI(tag, "... Adding device bus.");
+	ESP_LOGI(TAG, "... Adding device bus.");
 	ESP_ERROR_CHECK(spi_bus_add_device(HSPI_HOST, &dev_config, &spi_handle)); // spi_bus_remove_device() for "remove"
 
   gpio_set_direction((gpio_num_t)_dc, GPIO_MODE_OUTPUT);
@@ -199,6 +199,26 @@ void Adafruit_PCD8544::begin(uint8_t contrast, uint8_t bias) {
   updateBoundingBox(0, 0, LCDWIDTH-1, LCDHEIGHT-1);
   // Push out pcd8544_buffer to the Display (will show the AFI logo)
   display();
+}
+
+void Adafruit_PCD8544::stop() {
+  // TODO: Remove device from the bus
+  ESP_LOGI(TAG, "Try to stop PCD8544 Display");
+  int ret = spi_bus_remove_device(spi_handle);
+  if(ret != ESP_OK) {
+    ESP_LOGE(TAG, "Can not remove PCD8544 Display.");
+    // TODO: interrupt this process
+    return;
+  }
+
+  // TODO: Remove the spi bus
+  ret = spi_bus_free(HSPI_HOST);
+  if(ret != ESP_OK) {
+    ESP_LOGE(TAG, "Can not remove SPI Bus HSPI_HOST.");
+    // TODO: interrupt this process
+    return;
+  }
+  ESP_LOGI(TAG, "Stop Display to using SPI bus & free SPI bus HSPI_HOST");
 }
 
 

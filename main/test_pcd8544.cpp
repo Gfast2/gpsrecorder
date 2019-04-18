@@ -28,7 +28,7 @@ All text above, and the splash screen must be included in any redistribution
 //#include "sd_card.h"
 //extern void sd_card_task(void *pvParameters);
 
-static char tag[] = "Display";
+static char TAG [] = "DISPLAY";
 
 #define NUMFLAKES 10
 #define XPOS 0
@@ -73,14 +73,14 @@ static int min(int a, int b) {
 	return b;
 }
 extern "C" {
-	void task_test_pcd8544(void *ignore);
+	void task_test_pcd8544(void *pvParameters);
 }
 
-void task_display_info(void *ignore) {
-	ESP_LOGW(tag, "task 'task_display_info'started");
+void task_display_info(void *pvParameters) {
+	ESP_LOGW(TAG, "task 'task_display_info'started");
 	bme280Info bInfo;
 //	xTaskCreate(&sd_card_task, "task_sd_card", 8048, NULL, 5, NULL);
-	while(1) {
+	while(*( (int *)pvParameters ) == 1) {
 		  if(xQueueReceive(bme280_queue, (void *)(&bInfo), (TickType_t)0) == pdTRUE) {
 		  display.clearDisplay();
 		  display.setTextSize(1);
@@ -100,16 +100,17 @@ void task_display_info(void *ignore) {
 		  print(buffer);
 		  display.display();
 
-		  ESP_LOGW(tag, "%.2f degC / %.3f hPa / %.3f %%",
-	 					bInfo.temperature,
-	 					bInfo.pressure/100, // Pa -> hPa
-	 					bInfo.humidity);
+//		  ESP_LOGW(tag, "%.2f degC / %.3f hPa / %.3f %%",
+//	 					bInfo.temperature,
+//	 					bInfo.pressure/100, // Pa -> hPa
+//	 					bInfo.humidity);
 		  }
 	}
-// vTaskDelete(NULL);
+ ESP_LOGI(TAG, "Display Info Task get deleted");
+ vTaskDelete(NULL);
 }
 
-void task_test_pcd8544(void *ignore)   {
+void task_test_pcd8544(void *pvParameters)   {
   display.begin();
   display.setContrast(60);
   display.display();
@@ -119,11 +120,11 @@ void task_test_pcd8544(void *ignore)   {
   display.setTextColor(WHITE, BLACK); // 'inverted' text
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
   display.setTextSize(2);
-  ESP_LOGI(tag, "Display Initialization Task All done!");
+  ESP_LOGI(TAG, "Display Initialization Task All done!");
 
   // trigger another task and let it pull the information later.
-  xTaskCreate(&task_display_info, "task_display_info", 8048, NULL, 5, NULL);
-  ESP_LOGW(tag, "Display init task ended");
+  xTaskCreate(&task_display_info, "task_display_info", 8048, pvParameters, 5, NULL);
+  ESP_LOGW(TAG, "Display init task ended");
   // TODO: Finish this task
   vTaskDelete(NULL);
 }
