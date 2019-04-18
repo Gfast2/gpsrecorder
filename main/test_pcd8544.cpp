@@ -25,7 +25,11 @@ All text above, and the splash screen must be included in any redistribution
 #include "msg_type.h"
 #include "main.h"
 
-//#include "sd_card.h"
+// This is how to call a function from C in C++
+extern "C" {
+  void sd_card_task(void *pvParameters);
+}
+
 //extern void sd_card_task(void *pvParameters);
 
 static char TAG [] = "DISPLAY";
@@ -106,6 +110,11 @@ void task_display_info(void *pvParameters) {
 //	 					bInfo.humidity);
 		  }
 	}
+ ESP_LOGI(TAG, "Try to stop Display & its SPI Bus!");
+ // TODO: Here I should let display.stop() return some result infos, in order to
+ // decide if or not do following steps, like if or not should I call SD card task
+ display.stop();
+ xTaskCreate(&sd_card_task, "sd_card_task", 8048, NULL, 5, NULL);
  ESP_LOGI(TAG, "Display Info Task get deleted");
  vTaskDelete(NULL);
 }
