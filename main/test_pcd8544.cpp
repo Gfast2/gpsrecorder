@@ -28,9 +28,8 @@ All text above, and the splash screen must be included in any redistribution
 // This is how to call a function from C in C++
 extern "C" {
   void sd_card_task(void *pvParameters);
+  void task_test_pcd8544(void *pvParameters);
 }
-
-//extern void sd_card_task(void *pvParameters);
 
 static char TAG [] = "DISPLAY";
 
@@ -38,7 +37,6 @@ static char TAG [] = "DISPLAY";
 #define XPOS 0
 #define YPOS 1
 #define DELTAY 2
-
 
 #define LOGO16_GLCD_HEIGHT 16
 #define LOGO16_GLCD_WIDTH  16
@@ -76,11 +74,8 @@ static int min(int a, int b) {
 	}
 	return b;
 }
-extern "C" {
-	void task_test_pcd8544(void *pvParameters);
-}
 
-void task_display_info(void *pvParameters) {
+void tsk_disp_info(void *pvParameters) {
 	ESP_LOGW(TAG, "task 'task_display_info'started");
 	bme280Info bInfo;
 //	xTaskCreate(&sd_card_task, "task_sd_card", 8048, NULL, 5, NULL);
@@ -132,7 +127,7 @@ void task_test_pcd8544(void *pvParameters)   {
   ESP_LOGI(TAG, "Display Initialization Task All done!");
 
   // trigger another task and let it pull the information later.
-  xTaskCreate(&task_display_info, "task_display_info", 8048, pvParameters, 5, NULL);
+  xTaskCreate(&tsk_disp_info, "task_display_info", 8048, pvParameters, 5, NULL);
   ESP_LOGW(TAG, "Display init task ended");
   // TODO: Finish this task
   vTaskDelete(NULL);
