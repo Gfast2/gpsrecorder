@@ -218,8 +218,8 @@ void task_bme280_forced_mode(void *ignore) {
 
 //static char tag[] = "mpcd";
 
-extern void task_test_pcd8544(void *ignore);
-extern void sd_card_task(void *ignore);
+extern void task_test_pcd8544(void *pvParameters);
+extern void sd_card_task(void *pvParameters);
 //extern void task_scroll_text(void *ignore);
 extern void gps_clock_task(void *pvParameters);
 
@@ -240,8 +240,8 @@ void app_main(void)
 	//xTaskCreatePinnedToCore(&task_scroll_text, "task_simple_tests_pcd8544", 8048, NULL, 5, NULL, 0);
   i2c_master_init();
 //  TaskHandle_t xHandle_bme280;
-  int loopholder_bme280 = 1;
-  int loopholder_display = 1;
+  loopholder_bme280 = 1;
+  loopholder_display = 1;
   xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
 //  xTaskCreate(gps_clock_task, "task_gps", 4096, NULL, 5, NULL); // Comment back if I got both SD & Display works together
 //  xTaskCreate(&sd_card_task, "sd_card_task", 8048, NULL, 5, NULL); // Remove this task when test SD card works correctly

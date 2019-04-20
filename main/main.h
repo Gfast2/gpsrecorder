@@ -9,4 +9,12 @@
 
 QueueHandle_t bme280_queue; // button event communication
 
+// 1 -> loop in bme280 task should going on, 0 -> stop loop ASAP
+int loopholder_bme280;
+// 1 -> loop in "task_display_info" can going on, 0 -> stop this loop ASAP
+int loopholder_display;
+
+// Temperature task
+void task_bme280_normal_mode(void *pvParameters); // TODO: This should be moved to its own unit later
+
 #endif
