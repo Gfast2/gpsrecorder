@@ -149,10 +149,10 @@ void task_bme280_normal_mode(void *pvParameters)
 				&v_uncomp_pressure_s32, &v_uncomp_temperature_s32, &v_uncomp_humidity_s32);
 
 			if (com_rslt == SUCCESS) {
-				ESP_LOGI(TAG_BME280, "%.2f degC / %.3f hPa / %.3f %%",
-					bme280_compensate_temperature_double(v_uncomp_temperature_s32),
-					bme280_compensate_pressure_double(v_uncomp_pressure_s32)/100, // Pa -> hPa
-					bme280_compensate_humidity_double(v_uncomp_humidity_s32));
+//				ESP_LOGI(TAG_BME280, "%.2f degC / %.3f hPa / %.3f %%",
+//					bme280_compensate_temperature_double(v_uncomp_temperature_s32),
+//					bme280_compensate_pressure_double(v_uncomp_pressure_s32)/100, // Pa -> hPa
+//					bme280_compensate_humidity_double(v_uncomp_humidity_s32));
 
 				bme280Info bInfo = {
 						.temperature = bme280_compensate_temperature_double(v_uncomp_temperature_s32),
@@ -242,11 +242,11 @@ void app_main(void)
 //  TaskHandle_t xHandle_bme280;
   loopholder_bme280 = 1;
   loopholder_display = 1;
+  gps = pvPortMalloc(sizeof(gps_t)); // define this gps object
+  //  xTaskCreate( vTaskCode, "NAME", STACK_SIZE, NULL, tskIDLE_PRIORITY, &xHandle );
   xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
-//  xTaskCreate(gps_clock_task, "task_gps", 4096, NULL, 5, NULL); // Comment back if I got both SD & Display works together
-//  xTaskCreate(&sd_card_task, "sd_card_task", 8048, NULL, 5, NULL); // Remove this task when test SD card works correctly
+  xTaskCreate(gps_clock_task, "task_gps", 4096, NULL, 5, NULL); // Comment back if I got both SD & Display works together
   xTaskCreate(&task_test_pcd8544, "task_pcd8544_display", 8048, &loopholder_display, 5, NULL);
-//  xTaskCreate( vTaskCode, "NAME", STACK_SIZE, NULL, tskIDLE_PRIORITY, &xHandle );
 
   gpio_pad_select_gpio(LCD_LIGHT);
   gpio_set_direction(LCD_LIGHT, GPIO_MODE_OUTPUT);

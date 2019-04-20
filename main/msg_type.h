@@ -4,6 +4,9 @@
 #include <time.h>
 #include <sys/time.h>
 
+#define true  1
+#define false 0
+
 typedef enum {
 	LOW=0,
 	HIGH
