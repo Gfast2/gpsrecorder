@@ -65,6 +65,10 @@ static void print(char *text) {
     display.write(*text);
     text++;
   }
+}
+
+static void println(char *text) {
+  print(text);
   display.write('\n');
 }
 
@@ -84,19 +88,19 @@ void tsk_disp_info(void *pvParameters) {
 		  display.clearDisplay();
 		  display.setTextSize(1);
 		  display.setTextColor(BLACK);
-		  print((char *)"Temperature:");
+		  println((char *)"Temperature:");
 		  display.setTextSize(2);
 		  display.setTextColor(WHITE, BLACK);
 		  char buffer[12];
 		  int ret = snprintf(buffer, sizeof buffer, "%.2fC", bInfo.temperature);
-		  print(buffer);
+		  println(buffer);
 		  display.setTextSize(1);
 		  display.setTextColor(BLACK);
-		  print((char *)"Humidity:");
+		  println((char *)"Humidity:");
 		  display.setTextSize(2);
 		  display.setTextColor(WHITE, BLACK);
 		  ret = snprintf(buffer, sizeof buffer, "%.2f%%", bInfo.humidity);
-		  print(buffer);
+		  println(buffer);
 		  display.display();
 
 //		  ESP_LOGW(tag, "%.2f degC / %.3f hPa / %.3f %%",
@@ -114,6 +118,47 @@ void tsk_disp_info(void *pvParameters) {
  vTaskDelete(NULL);
 }
 
+// Display GPS Informations
+void task_disp_gps(void *pvParameters) {
+  ESP_LOGI(TAG, "Display GPS information.");
+  // TODO: Available satellites
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(BLACK);
+  while(1) {
+    if(gps->semaphore_gps == NULL) {
+      ESP_LOGI(TAG, "Waiting for GPS info comming.");
+      continue;
+    }
+    if(xSemaphoreTake(gps->semaphore_gps, 3000/portTICK_RATE_MS) != pdTRUE) {
+      ESP_LOGW(TAG, "Wait for other task free gps object accessing failed, wait"\
+          " for next round");
+      continue;
+    }
+    display.clearDisplay();
+    print((char *)"Satellites:");
+    char buf [25];
+    itoa(gps->satellites_tracked, buf, 10);
+    println(buf);
+    int ret = snprintf(buf, sizeof buf, "==%d-%d-%d==", gps->year, gps->month, gps->day);
+    println(buf);
+    ret = snprintf(buf, sizeof buf, "+-%d:%d:%d--+", gps->hour, gps->minute, gps->second); // TODO: Handle ret according to results
+    println(buf);
+    ret = snprintf(buf, sizeof buf, "A.%.4f", gps->altitude);
+    println(buf);
+    ret = snprintf(buf, sizeof buf, "Lo.%.4f", gps->longitude);
+    println(buf);
+    ret = snprintf(buf, sizeof buf, "La.%.4f", gps->latitude);
+    println(buf);
+    display.display();
+    xSemaphoreGive(gps->semaphore_gps);
+    vTaskDelay(1000/portTICK_RATE_MS);
+  }
+
+  ESP_LOGI(TAG, "Display GPS information Task terminated.");
+  vTaskDelete(NULL);
+}
+
 void task_test_pcd8544(void *pvParameters)   {
   display.begin();
   display.setContrast(60);
@@ -123,11 +168,11 @@ void task_test_pcd8544(void *pvParameters)   {
   display.setCursor(0,0);
   display.setTextColor(WHITE, BLACK); // 'inverted' text
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
-  display.setTextSize(2);
   ESP_LOGI(TAG, "Display Initialization Task All done!");
 
   // trigger another task and let it pull the information later.
-  xTaskCreate(&tsk_disp_info, "task_display_info", 8048, pvParameters, 5, NULL);
+//  xTaskCreate(&tsk_disp_info, "task_display_info", 8048, pvParameters, 5, NULL);
+  xTaskCreate(&task_disp_gps, "task_disp_gps", 8048, NULL, 5, NULL);
   ESP_LOGW(TAG, "Display init task ended");
   // TODO: Finish this task
   vTaskDelete(NULL);

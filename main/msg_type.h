@@ -71,6 +71,7 @@ typedef struct {
 	float speed_knots;
 	float speed_kph;
 	char faa_mode; // https://www.faa.gov/about/office_org/headquarters_offices/ato/service_units/techops/navservices/gnss/library/factsheets/media/RNAV_QFSheet.pdf
+	SemaphoreHandle_t semaphore_gps; // semaphore protect multi task accessing it.
 } gps_t;
 
 /*

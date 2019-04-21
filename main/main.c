@@ -28,16 +28,7 @@
 #define SCL_PIN 22 // GPIO_NUM_2
 
 #define TAG "MAIN"
-
 #define TAG_BME280 "BME280"
-
-//#define s8 int8_t
-//#define u8 uint8_t
-//#define s32 int32_t
-//#define u32 uint32_t
-
-#define true 1
-#define false 0
 
 void i2c_master_init()
 {
@@ -243,8 +234,8 @@ void app_main(void)
   loopholder_bme280 = 1;
   loopholder_display = 1;
   gps = pvPortMalloc(sizeof(gps_t)); // define this gps object
-  //  xTaskCreate( vTaskCode, "NAME", STACK_SIZE, NULL, tskIDLE_PRIORITY, &xHandle );
-  xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
+  // Tipp: xTaskCreate( vTaskCode, "NAME", STACK_SIZE, NULL, tskIDLE_PRIORITY, &xHandle );
+//  xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
   xTaskCreate(gps_clock_task, "task_gps", 4096, NULL, 5, NULL); // Comment back if I got both SD & Display works together
   xTaskCreate(&task_test_pcd8544, "task_pcd8544_display", 8048, &loopholder_display, 5, NULL);
 

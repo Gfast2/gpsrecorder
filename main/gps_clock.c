@@ -158,14 +158,19 @@ void gps_clock_task(void *pvParameters) {
   ESP_LOGI(TAG, "Start to update GPS Info");
   // This loop the gps task will update the GPS information & waiting for the
   // others to accessing it when needed (protect the IO with semaphore)
+  gps->semaphore_gps = xSemaphoreCreateBinary();
+  xSemaphoreGive(gps->semaphore_gps); // I have to define the semaphore is given clearly
   while (1) {
     readLine(GPS_UART, line);
-//    ESP_LOGW(TAG, "%s", line); // Log the raw data line
-    printf("%s", line);
+//    printf("%s", line); // Log the raw data line
     // When there is a new message comes in, mutate this flag:
-//      xQueueSendToBack(gps2led_q, (void *)(&gps_getSignal), (TickType_t)0);
 
-    // TODO: Update GPS info
+    // Try to lock gps object's semaphore, waiting this happens for three sec.
+    if(xSemaphoreTake(gps->semaphore_gps, 3000/portTICK_RATE_MS) != pdTRUE) {
+      ESP_LOGW(TAG, "Wait for other task free gps object accessing failed, wait"\
+          " for next round");
+      continue;
+    }
     switch (minmea_sentence_id((char *) line, false)) {
     case MINMEA_SENTENCE_RMC:
       ESP_LOGV(TAG, "Sentence - MINMEA_SENTENCE_RMC");
@@ -173,38 +178,18 @@ void gps_clock_task(void *pvParameters) {
       // TODO: I think about the situation when too long time can not get signal from GPS to update/sync the time rightnow
       struct minmea_sentence_rmc senRMC;
       if (minmea_parse_rmc(&senRMC, (char *) line)) {
-          ESP_LOGV(TAG, "time: %d:%d:%d %d-%d-%d", senRMC.time.hours,
-                  senRMC.time.minutes, senRMC.time.seconds,
-                  2000 + senRMC.date.year, senRMC.date.month,
-                  senRMC.date.day);
-          mytm.tm_hour = senRMC.time.hours;
-          mytm.tm_min = senRMC.time.minutes;
-          mytm.tm_sec = senRMC.time.seconds;
-          mytm.tm_mday = senRMC.date.day;
-          mytm.tm_mon = senRMC.date.month - 1;
-          mytm.tm_year = 100 + senRMC.date.year;
-
-          // 1998-10-29 is GPS's start up time read value.
-          // This is the apply day of GPS patent.
+//          ESP_LOGI(TAG, "time: %d:%d:%d %d-%d-%d", senRMC.time.hours,
+//                  senRMC.time.minutes, senRMC.time.seconds,
+//                  2000 + senRMC.date.year, senRMC.date.month,
+//                  senRMC.date.day);
           if (senRMC.date.year > 0) {
-            if (notimeset) {
-              gps->year = senRMC.date.year;
+              gps->year = 2000 + senRMC.date.year;
               gps->month= senRMC.date.month;
               gps->day  = senRMC.date.day;
               gps->hour = senRMC.time.hours;
               gps->minute = senRMC.time.minutes;
               gps->second = senRMC.time.seconds;
-              setenv("TZ", "GMT0GMT0", 1);
-              tzset();
-              time_t t = mktime(&mytm);
-              //                  ESP_LOGI(TAG, "time: %ld",t);
-              tv.tv_sec = t;
-              tv.tv_usec = 0;
-              settimeofday(&tv, NULL);
-//                      xQueueSendToBack(gpstime_q, (void *)(&notimeset), (TickType_t)0);
-              notimeset = 0;
-              ESP_LOGW(TAG, "SET TIME!!!!");
-            }
+//              ESP_LOGW(TAG, "GPS Time synced!!!!");
           }
           // TODO: Here I should pick up other useful info from this sentence later...
       }
@@ -214,7 +199,7 @@ void gps_clock_task(void *pvParameters) {
       ; // <- This thing make the following line works correctlly
       struct minmea_sentence_gga senGGA;
       if (minmea_parse_gga(&senGGA, (char *) line)) {
-        ESP_LOGI(TAG, "sat. Tracking: %d", senGGA.satellites_tracked);
+//        ESP_LOGI(TAG, "sat. Tracking: %d", senGGA.satellites_tracked);
         gps->altitude = getFloat(senGGA.altitude);
         gps->longitude = getFloat(senGGA.longitude);
         gps->latitude = getFloat(senGGA.latitude);
@@ -315,9 +300,8 @@ void gps_clock_task(void *pvParameters) {
       ESP_LOGV(TAG, "Sentence - other");
       break;
     }
-
-    // TODO: Send "gps" to webserver through queue
-
+    // release gps object's semaphore
+    xSemaphoreGive(gps->semaphore_gps);
 //      ESP_LOGI(TAG, "HHHHHHHHHHHHHHHHHHHHHHHHHHHH");
 //      ESP_LOGI(TAG, "HHH satellites track: %d HHH", gps->satellites_tracked);
 //      ESP_LOGI(TAG, "HHH height_units    : %s HHH", &(gps->height_units));
@@ -330,5 +314,6 @@ void gps_clock_task(void *pvParameters) {
 
 	ESP_LOGI(TAG, "Stop to update GPS Info & terminal gps_clock task now.");
 	deinitUART(GPS_UART);
+	gps->semaphore_gps = NULL;
 	vTaskDelete(NULL);
 }
