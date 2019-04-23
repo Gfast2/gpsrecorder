@@ -172,16 +172,11 @@ void gps_clock_task(void *pvParameters) {
       continue;
     }
     switch (minmea_sentence_id((char *) line, false)) {
-    case MINMEA_SENTENCE_RMC:
+    case MINMEA_SENTENCE_RMC: // (recommended minimum data for gps )
       ESP_LOGV(TAG, "Sentence - MINMEA_SENTENCE_RMC");
-      // TODO: I build mechanisum to prevent too offen update the system time!
       // TODO: I think about the situation when too long time can not get signal from GPS to update/sync the time rightnow
       struct minmea_sentence_rmc senRMC;
       if (minmea_parse_rmc(&senRMC, (char *) line)) {
-//          ESP_LOGI(TAG, "time: %d:%d:%d %d-%d-%d", senRMC.time.hours,
-//                  senRMC.time.minutes, senRMC.time.seconds,
-//                  2000 + senRMC.date.year, senRMC.date.month,
-//                  senRMC.date.day);
           if (senRMC.date.year > 0) {
               gps->year = 2000 + senRMC.date.year;
               gps->month= senRMC.date.month;
@@ -189,9 +184,12 @@ void gps_clock_task(void *pvParameters) {
               gps->hour = senRMC.time.hours;
               gps->minute = senRMC.time.minutes;
               gps->second = senRMC.time.seconds;
-//              ESP_LOGW(TAG, "GPS Time synced!!!!");
           }
-          // TODO: Here I should pick up other useful info from this sentence later...
+          // TODO:
+          // Here I should pick up other info
+          // speed (knot)
+          // coordinate
+          // valid ('A' for active, 'V' for void)
       }
       break;
     case MINMEA_SENTENCE_GGA:
@@ -199,10 +197,10 @@ void gps_clock_task(void *pvParameters) {
       ; // <- This thing make the following line works correctlly
       struct minmea_sentence_gga senGGA;
       if (minmea_parse_gga(&senGGA, (char *) line)) {
-//        ESP_LOGI(TAG, "sat. Tracking: %d", senGGA.satellites_tracked);
         gps->altitude = getFloat(senGGA.altitude);
-        gps->longitude = getFloat(senGGA.longitude);
-        gps->latitude = getFloat(senGGA.latitude);
+        gps->longitude = minmea_tocoord(&(senGGA.longitude));
+        gps->latitude = minmea_tocoord(&(senGGA.latitude));
+        ESP_LOGI(TAG, "lati.: %f, longi.: %f", gps->latitude, gps->longitude);
         gps->height = getFloat(senGGA.height);
         gps->hdop = getFloat(senGGA.hdop);
         gps->fix_quality = senGGA.fix_quality;
