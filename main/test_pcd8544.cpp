@@ -144,13 +144,17 @@ void task_disp_gps(void *pvParameters) {
     println(buf);
     ret = snprintf(buf, sizeof buf, "+-%d:%d:%d--+", gps->hour, gps->minute, gps->second); // TODO: Handle ret according to results
     println(buf);
-    ret = snprintf(buf, sizeof buf, "A.%.4f", gps->altitude);
+    ret = snprintf(buf, sizeof buf, "A.%.2f%s", gps->altitude, &(gps->altitude_units));
     println(buf);
-    ret = snprintf(buf, sizeof buf, "Lo.%.4f", gps->longitude);
+    char dir [1];
+    dir[0] = gps->latitude > 0 ? 'N' : 'S';
+    ret = snprintf(buf, sizeof buf, "La.%s%.4f", dir, gps->latitude);
     println(buf);
-    ret = snprintf(buf, sizeof buf, "La.%.4f", gps->latitude);
+    dir[0] = gps->longitude > 0 ? 'E' : 'W';
+    ret = snprintf(buf, sizeof buf, "Lo.%s%.4f", dir, gps->longitude);
     println(buf);
     display.display();
+//    ESP_LOGI(TAG, "lati.: %f, longi.: %f", gps->latitude, gps->longitude);
     xSemaphoreGive(gps->semaphore_gps);
     vTaskDelay(1000/portTICK_RATE_MS);
   }

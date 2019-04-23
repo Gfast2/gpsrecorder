@@ -200,7 +200,7 @@ void gps_clock_task(void *pvParameters) {
         gps->altitude = getFloat(senGGA.altitude);
         gps->longitude = minmea_tocoord(&(senGGA.longitude));
         gps->latitude = minmea_tocoord(&(senGGA.latitude));
-        ESP_LOGI(TAG, "lati.: %f, longi.: %f", gps->latitude, gps->longitude);
+//        ESP_LOGI(TAG, "lati.: %f, longi.: %f", gps->latitude, gps->longitude);
         gps->height = getFloat(senGGA.height);
         gps->hdop = getFloat(senGGA.hdop);
         gps->fix_quality = senGGA.fix_quality;
@@ -241,8 +241,8 @@ void gps_clock_task(void *pvParameters) {
         ;
         struct minmea_sentence_gll senGLL;
         if (minmea_parse_gll(&senGLL, (char *) line)) {
-            gps->longitude = getFloat(senGLL.longitude);
-            gps->latitude = getFloat(senGLL.latitude);
+            gps->longitude = minmea_tocoord(&(senGLL.longitude));
+            gps->latitude = minmea_tocoord(&(senGLL.latitude));
             gps->hour = senGLL.time.hours;
             gps->minute = senGLL.time.minutes;
             gps->second = senGLL.time.seconds;
