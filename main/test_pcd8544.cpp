@@ -79,7 +79,7 @@ static int min(int a, int b) {
 	return b;
 }
 
-void tsk_disp_info(void *pvParameters) {
+void tsk_disp_temp(void *pvParameters) {
 	ESP_LOGW(TAG, "task 'task_display_info'started");
 	bme280Info bInfo;
 //	xTaskCreate(&sd_card_task, "task_sd_card", 8048, NULL, 5, NULL);
@@ -175,8 +175,8 @@ void task_test_pcd8544(void *pvParameters)   {
   ESP_LOGI(TAG, "Display Initialization Task All done!");
 
   // trigger another task and let it pull the information later.
-//  xTaskCreate(&tsk_disp_info, "task_display_info", 8048, pvParameters, 5, NULL);
-  xTaskCreate(&task_disp_gps, "task_disp_gps", 8048, NULL, 5, NULL);
+  xTaskCreate(&tsk_disp_temp, "task_display_info", 8048, pvParameters, 5, NULL);
+//  xTaskCreate(&task_disp_gps, "task_disp_gps", 8048, NULL, 5, NULL);
   ESP_LOGW(TAG, "Display init task ended");
   // TODO: Finish this task
   vTaskDelete(NULL);

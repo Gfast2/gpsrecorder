@@ -235,7 +235,7 @@ void app_main(void)
   loopholder_display = 1;
   gps = pvPortMalloc(sizeof(gps_t)); // define this gps object
   // Tipp: xTaskCreate( vTaskCode, "NAME", STACK_SIZE, NULL, tskIDLE_PRIORITY, &xHandle );
-//  xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
+  xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
   xTaskCreate(gps_clock_task, "task_gps", 4096, NULL, 5, NULL); // Comment back if I got both SD & Display works together
   xTaskCreate(&task_test_pcd8544, "task_pcd8544_display", 8048, &loopholder_display, 5, NULL);
 
@@ -243,6 +243,8 @@ void app_main(void)
   gpio_set_direction(LCD_LIGHT, GPIO_MODE_OUTPUT);
   gpio_set_level(LCD_LIGHT, 1);
 
+
+  // TODO: Would it better, if we wanna pack this in "btn_task"?
   // Button read snippet!
   gpio_pad_select_gpio(BTN);
   gpio_set_direction(BTN, GPIO_MODE_INPUT);
