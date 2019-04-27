@@ -114,4 +114,12 @@ typedef struct {
 	uint16_t debouncetime[5]; // debounce time for each gpio
 } conf_t;
 
+// Mode the system need to handle
+enum displayMode {
+  GPS_INFO_DETAIL = 0,
+  TEMPERATUREANDHUMDIDITY,
+  SPEED,
+  SHOWLASTGPSLOG
+};
+
 #endif /* MAIN_IOC_110_TYPE_H_ */

@@ -252,23 +252,43 @@ void app_main(void)
   gpio_set_direction(LCD_LIGHT, GPIO_MODE_OUTPUT);
   int btn_old = 0;
   int btn_now = 0;
+  uint32_t btn_long_press_old = 0;
   while(1) {
     btn_now = gpio_get_level(BTN);
 //    ESP_LOGI(TAG, "BTN: %d", btn_now);
     if(btn_now != btn_old){
 //      ESP_LOGI(TAG, "Get New State");
       btn_old = btn_now;
-      if(btn_now == 1){
+      btn_long_press_old = xTaskGetTickCount();
+      if(btn_now == 1){ // btn pressed down
         ESP_LOGI(TAG, "BTN get pressed down.");
-        // TODO: Here I stop temperature reading Task
+        // TODO: Start checking how long have the button get pressed down.
+        // TODO: When the button get released after more then 1 second, then go to the next display mode.
+        // TODO: When the button get released in less then 1 second, do the gps coordinate snapshot
 //        vTaskDelete( xHandle_bme280 ); // TODO: free in this task located heap memory
-        loopholder_bme280 = 0; // This will cause the bme280 task go out of its while loop.
-        // TODO: Here I stop Display Task
-        loopholder_display = 0;
-        // TODO: Here I Start SD Card Task, write Hello to the file
-        // TODO: Here I read the right now coordinate to the SD Card
+        btn_long_press_old = xTaskGetTickCount();
+      } else { // btn released
+        if(abs(xTaskGetTickCount()-btn_long_press_old) < 1000/portTICK_PERIOD_MS){
+          ESP_LOGI(TAG, "Triggered a snapshot");
+          // This is how to generate a "gps coordinate snapshot" when I in Temperature mode
+          loopholder_bme280 = 0; // Here I stop temperature reading Task
+          loopholder_display = 0;// Here I stop Display Task
+        }
       }
-    } else {
+    }
+    else if(btn_now == 1) { // Check if this is a long press btn event
+      ESP_LOGI(TAG, "newTick: %lu, oldTick: %lu, %lu",
+          (unsigned long)xTaskGetTickCount(), (unsigned long)btn_long_press_old,
+          (unsigned long)(1000/portTICK_PERIOD_MS)
+          );
+
+      if(abs(xTaskGetTickCount()-btn_long_press_old) > 1000/portTICK_PERIOD_MS){
+        ESP_LOGI(TAG, "long btn press get triggered");
+        // TODO: go to the next display mode
+        btn_long_press_old=xTaskGetTickCount(); // Update timer preparing trigger the next long btn press event
+      }
+    }
+    else {
 //      ESP_LOGI(TAG, "Old State");
     }
     vTaskDelay(100 / portTICK_PERIOD_MS);
