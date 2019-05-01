@@ -307,6 +307,7 @@ void gps_clock_task(void *pvParameters) {
 //      ESP_LOGI(TAG, "HHH dgps_age        : %d HHH", gps->dgps_age);
 //      ESP_LOGI(TAG, "HHH altitude_units  : %s HHH", &(gps->altitude_units));
 //      ESP_LOGI(TAG, "HHHHHHH %d:%d:%d:%d HHHHHHHH", gps->hour, gps->minute,gps->second, gps->microseconds);
+//      ESP_LOGI(TAG, "HHHHHHH %d-%d-%d HHHHHHHH", gps->year, gps->month,gps->day);
 //      ESP_LOGI(TAG, "HHHHHHHHHHHHHHHHHHHHHHHHHHHH");
     }
 
