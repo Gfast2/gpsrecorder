@@ -15,6 +15,7 @@
 #include "esp_log.h"
 #include "freertos/task.h"
 
+
 #include "main.h"
 #include "msg_type.h"
 
@@ -133,28 +134,31 @@ void task_bme280_normal_mode(void *pvParameters)
 
 	com_rslt += bme280_set_power_mode(BME280_NORMAL_MODE);
 	if (com_rslt == SUCCESS) {
-		while( (*((int *)pvParameters) ) == 1) {
-			vTaskDelay(100/portTICK_PERIOD_MS);
+	  bInfo.semaphore_bme280 = xSemaphoreCreateBinary();
+      xSemaphoreGive(bInfo.semaphore_bme280); // I have to define the semaphore is given clearly
+      while( (*((int *)pvParameters) ) == 1) {
+        vTaskDelay(100/portTICK_PERIOD_MS);
 
-			com_rslt = bme280_read_uncomp_pressure_temperature_humidity(
-				&v_uncomp_pressure_s32, &v_uncomp_temperature_s32, &v_uncomp_humidity_s32);
+        com_rslt = bme280_read_uncomp_pressure_temperature_humidity(
+            &v_uncomp_pressure_s32, &v_uncomp_temperature_s32, &v_uncomp_humidity_s32);
 
-			if (com_rslt == SUCCESS) {
+        if (com_rslt == SUCCESS) {
 //				ESP_LOGI(TAG_BME280, "%.2f degC / %.3f hPa / %.3f %%",
 //					bme280_compensate_temperature_double(v_uncomp_temperature_s32),
 //					bme280_compensate_pressure_double(v_uncomp_pressure_s32)/100, // Pa -> hPa
 //					bme280_compensate_humidity_double(v_uncomp_humidity_s32));
-
-				bme280Info bInfo = {
-						.temperature = bme280_compensate_temperature_double(v_uncomp_temperature_s32),
-						.pressure = bme280_compensate_pressure_double(v_uncomp_pressure_s32)/100,
-						.humidity = bme280_compensate_humidity_double(v_uncomp_humidity_s32)
-				};
-				xQueueSendToBack(bme280_queue, (void *)(&bInfo), (TickType_t)0);
-			} else {
-				ESP_LOGE(TAG_BME280, "measure error. code: %d", com_rslt);
-			}
-		}
+          if(xSemaphoreTake(bInfo.semaphore_bme280, 3000/portTICK_RATE_MS) != pdTRUE) {
+            ESP_LOGW(TAG_BME280, "bme280 task can not get bInfo semaphore more then 3 seconds!");
+            continue;
+          }
+          bInfo.temperature = bme280_compensate_temperature_double(v_uncomp_temperature_s32);
+          bInfo.pressure = bme280_compensate_pressure_double(v_uncomp_pressure_s32)/100;
+          bInfo.humidity = bme280_compensate_humidity_double(v_uncomp_humidity_s32);
+          xSemaphoreGive(bInfo.semaphore_bme280);
+        } else {
+            ESP_LOGE(TAG_BME280, "measure error. code: %d", com_rslt);
+        }
+      }
 	} else {
 		ESP_LOGE(TAG_BME280, "init or setting error. code: %d", com_rslt);
 	}
@@ -222,12 +226,6 @@ extern void gps_clock_task(void *pvParameters);
 
 void app_main(void)
 {
-  bme280_queue = xQueueCreate(10, sizeof(bme280Info));
-  if(bme280_queue != 0) {
-	  ESP_LOGI(TAG, "bme280 queue inited");
-  } else {
-	  ESP_LOGD(TAG, "bme280 queue can't init");
-  }
 	//xTaskCreatePinnedToCore(&task_scroll_text, "task_simple_tests_pcd8544", 8048, NULL, 5, NULL, 0);
   i2c_master_init();
 //  TaskHandle_t xHandle_bme280;
@@ -268,7 +266,7 @@ void app_main(void)
 //        vTaskDelete( xHandle_bme280 ); // TODO: free in this task located heap memory
         btn_long_press_old = xTaskGetTickCount();
       } else { // btn released
-        if(abs(xTaskGetTickCount()-btn_long_press_old) < 1000/portTICK_PERIOD_MS){
+        if(abs(xTaskGetTickCount()-btn_long_press_old) < 1000/portTICK_PERIOD_MS){ // time to make a gps snapshot
           ESP_LOGI(TAG, "Triggered a snapshot");
           // This is how to generate a "gps coordinate snapshot" when I in Temperature mode
           loopholder_bme280 = 0; // Here I stop temperature reading Task
@@ -291,6 +289,8 @@ void app_main(void)
     else {
 //      ESP_LOGI(TAG, "Old State");
     }
+//    uxTaskGetSystemState();
+//    ESP_LOGI(TAG, "%s", buf_state);
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 

@@ -81,38 +81,40 @@ static int min(int a, int b) {
 
 void tsk_disp_temp(void *pvParameters) {
 	ESP_LOGW(TAG, "task 'task_display_info'started");
-	bme280Info bInfo;
-//	xTaskCreate(&sd_card_task, "task_sd_card", 8048, NULL, 5, NULL);
-	while(*( (int *)pvParameters ) == 1) {
-		  if(xQueueReceive(bme280_queue, (void *)(&bInfo), (TickType_t)0) == pdTRUE) {
-		  display.clearDisplay();
-		  display.setTextSize(1);
-		  display.setTextColor(BLACK);
-		  println((char *)"Temperature:");
-		  display.setTextSize(2);
-		  display.setTextColor(WHITE, BLACK);
-		  char buffer[12];
-		  int ret = snprintf(buffer, sizeof buffer, "%.2fC", bInfo.temperature);
-		  println(buffer);
-		  display.setTextSize(1);
-		  display.setTextColor(BLACK);
-		  println((char *)"Humidity:");
-		  display.setTextSize(2);
-		  display.setTextColor(WHITE, BLACK);
-		  ret = snprintf(buffer, sizeof buffer, "%.2f%%", bInfo.humidity);
-		  println(buffer);
-		  display.display();
-
-//		  ESP_LOGW(tag, "%.2f degC / %.3f hPa / %.3f %%",
-//	 					bInfo.temperature,
-//	 					bInfo.pressure/100, // Pa -> hPa
-//	 					bInfo.humidity);
-		  }
+    while(*( (int *)pvParameters ) == 1) {
+	  if( bInfo.semaphore_bme280 == NULL) {
+        ESP_LOGI(TAG, "Waiting for bme280 sensor info comming.");
+        continue;
+      }
+	  if(xSemaphoreTake(bInfo.semaphore_bme280, 3000/portTICK_RATE_MS) != pdTRUE) {
+        ESP_LOGW(TAG, "Wait for other task free bme280 object accessing failed, wait"\
+            " for next round");
+        continue;
+      }
+      display.clearDisplay();
+      display.setTextSize(1);
+      display.setTextColor(BLACK);
+      println((char *)"Temperature:");
+      display.setTextSize(2);
+      display.setTextColor(WHITE, BLACK);
+      char buffer[12];
+      int ret = snprintf(buffer, sizeof buffer, "%.2fC", bInfo.temperature);
+      println(buffer);
+      display.setTextSize(1);
+      display.setTextColor(BLACK);
+      println((char *)"Humidity:");
+      display.setTextSize(2);
+      display.setTextColor(WHITE, BLACK);
+      ret = snprintf(buffer, sizeof buffer, "%.2f%%", bInfo.humidity);
+      println(buffer);
+      display.display();
+      xSemaphoreGive(bInfo.semaphore_bme280);
 	}
  ESP_LOGI(TAG, "Try to stop Display & its SPI Bus!");
- // TODO: Here I should let display.stop() return some result infos, in order to
+ // Here I should let display.stop() return some result infos, in order to
  // decide if or not do following steps, like if or not should I call SD card task
  display.stop();
+ bInfo.semaphore_bme280 = NULL;
  xTaskCreate(&sd_card_task, "sd_card_task", 8048, NULL, 5, NULL);
  ESP_LOGI(TAG, "Display Info Task get deleted");
  vTaskDelete(NULL);

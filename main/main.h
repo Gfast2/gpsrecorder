@@ -8,7 +8,7 @@
 #include "string.h"
 #include "msg_type.h"
 
-QueueHandle_t bme280_queue; // button event communication
+bme280Info bInfo; // temperature, air pressure & humidity info
 
 // 1 -> loop in bme280 task should going on, 0 -> stop loop ASAP
 int loopholder_bme280;

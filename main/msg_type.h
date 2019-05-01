@@ -16,6 +16,7 @@ typedef struct {
 	double temperature;
 	double pressure;
 	double humidity;
+	SemaphoreHandle_t semaphore_bme280;
 } bme280Info;
 
 // We need millisecond precision,

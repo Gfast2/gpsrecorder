@@ -77,32 +77,37 @@ void sd_card_task(void *pvParameters){
   // Use POSIX and C standard library functions to work with files.
   // First create a file.
   ESP_LOGI(TAG, "Opening file");
-  FILE* f = fopen("/sdcard/hello.txt", "w");
+  FILE* f = fopen("/sdcard/gps.txt", "a");
   if (f == NULL) {
       ESP_LOGE(TAG, "Failed to open file for writing");
       return;
   }
-  fprintf(f, "Hello %s!\n", card->cid.name);
+//  fprintf(f, "Hello %s!\n", card->cid.name);
+  // TODO: Write gps information: time-latitude-longitude
+  fprintf(f, "%d-%d-%dT%d:%d:%d:%d@%f,%f\n",
+      gps->year, gps->month,gps->day,
+      gps->hour, gps->minute,gps->second, gps->microseconds,
+      gps->latitude, gps->longitude);
   fclose(f);
-  ESP_LOGI(TAG, "File written");
+  ESP_LOGI(TAG, "gps file updated");
 
   // Check if destination file exists before renaming
-  struct stat st;
-  if (stat("/sdcard/foo.txt", &st) == 0) {
-      // Delete it if it exists
-      unlink("/sdcard/foo.txt");
-  }
-
-  // Rename original file
-  ESP_LOGI(TAG, "Renaming file");
-  if (rename("/sdcard/hello.txt", "/sdcard/foo.txt") != 0) {
-      ESP_LOGE(TAG, "Rename failed");
-      return;
-  }
+//  struct stat st;
+//  if (stat("/sdcard/foo.txt", &st) == 0) {
+//      // Delete it if it exists
+//      unlink("/sdcard/foo.txt");
+//  }
+//
+//  // Rename original file
+//  ESP_LOGI(TAG, "Renaming file");
+//  if (rename("/sdcard/hello.txt", "/sdcard/foo.txt") != 0) {
+//      ESP_LOGE(TAG, "Rename failed");
+//      return;
+//  }
 
   // Open renamed file for reading
   ESP_LOGI(TAG, "Reading file");
-  f = fopen("/sdcard/foo.txt", "r");
+  f = fopen("/sdcard/gps.txt", "r");
   if (f == NULL) {
       ESP_LOGE(TAG, "Failed to open file for reading");
       return;
