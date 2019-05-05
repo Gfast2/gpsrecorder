@@ -25,10 +25,13 @@ All text above, and the splash screen must be included in any redistribution
 #include "msg_type.h"
 #include "main.h"
 
-// This is how to call a function from C in C++
+// This is how to call a function from C in C++ or reversed
+// https://isocpp.org/wiki/faq/mixing-c-and-cpp#call-cpp
 extern "C" {
   void sd_card_task(void *pvParameters);
   void task_test_pcd8544(void *pvParameters);
+  void tsk_disp_temp(void *pvParameters);
+  void task_disp_gps(void *pvParameters);
 }
 
 static char TAG [] = "DISPLAY";
@@ -127,7 +130,7 @@ void task_disp_gps(void *pvParameters) {
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(BLACK);
-  while(1) {
+  while(*( (int *)pvParameters ) == 1) {
     if(gps->semaphore_gps == NULL) {
       ESP_LOGI(TAG, "Waiting for GPS info comming.");
       continue;
