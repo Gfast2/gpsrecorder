@@ -133,15 +133,15 @@ uint8_t Adafruit_PCD8544::getPixel(int8_t x, int8_t y) {
 void Adafruit_PCD8544::begin(uint8_t contrast, uint8_t bias) {
 
 	ESP_LOGI(TAG, "test abcd: _sclk: %d, _din: %d", _sclk, _din);
-	spi_bus_config_t bus_config;
+	spi_bus_config_t bus_config = {}; // Zero the struct
 	bus_config.sclk_io_num   = _sclk; // CLK
 	bus_config.mosi_io_num   = _din; // MOSI
 	bus_config.miso_io_num   = -1; // MISO
 	bus_config.quadwp_io_num = -1; // Not used
 	bus_config.quadhd_io_num = -1; // Not used
 	ESP_LOGI(TAG, "... Initializing bus.");
-	ESP_ERROR_CHECK(spi_bus_initialize(HSPI_HOST, &bus_config,0/*1*/)); // spi_bus_free() for "remove"
-	spi_device_interface_config_t dev_config;
+	ESP_ERROR_CHECK(spi_bus_initialize(HSPI_HOST, &bus_config,1)); // spi_bus_free() for "remove"
+	spi_device_interface_config_t dev_config = {};
 	dev_config.address_bits     = 0;
 	dev_config.command_bits     = 0;
 	dev_config.dummy_bits       = 0;
@@ -218,7 +218,7 @@ void Adafruit_PCD8544::stop() {
     // TODO: interrupt this process
     return;
   }
-  ESP_LOGI(TAG, "Stop Display to using SPI bus & free SPI bus HSPI_HOST");
+  ESP_LOGI(TAG, "Stop Display to using SPI bus & free SPI bus HSPI_HOST succeed!");
 }
 
 
