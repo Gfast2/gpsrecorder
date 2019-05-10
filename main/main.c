@@ -209,8 +209,6 @@ void task_bme280_forced_mode(void *ignore) {
 	vTaskDelete(NULL);
 }
 
-
-
 //static char tag[] = "mpcd";
 
 extern void sd_card_task(void *pvParameters);
@@ -276,6 +274,7 @@ void app_main(void)
       i++) {
     taskEndedSemaphoreArr[i] = xSemaphoreCreateBinary();
   }
+  sdTskEndedSemaphore = xSemaphoreCreateBinary();
 
   stopCertainMode[0] = &stop_mode_temp;
   stopCertainMode[1] = &stop_mode_gps_detail;
@@ -307,9 +306,19 @@ void app_main(void)
         if(abs(xTaskGetTickCount()-btn_long_press_old) < 1000/portTICK_PERIOD_MS
             && !longPressFlag){ // time to make a gps snapshot
           ESP_LOGI(TAG, "Triggered a snapshot");
-          // This is how to generate a "gps coordinate snapshot" when I in Temperature mode
-//          loopholder_bme280 = 0; // Here I stop temperature reading Task
-//          loopholder_display = 0;// Here I stop Display Task
+          // Trigger a snapshot.
+          // Stop the right now mode (Kill tasks that should be stopped)
+          (*stopCertainMode[dMode])();
+          if(xSemaphoreTake(taskEndedSemaphoreArr[dMode], 3000/portTICK_RATE_MS) != pdTRUE) {
+            ESP_LOGW(TAG, "Wait for other task finish there job timeout!");
+          }
+          xTaskCreate(&sd_card_task, "sd_card_tsk",  4096, NULL, 6, NULL);
+          // Trigger the SD Card task
+          if(xSemaphoreTake(sdTskEndedSemaphore, 3000/portTICK_RATE_MS) != pdTRUE) {
+            ESP_LOGW(TAG, "Wait for sd card I/O task finish its job timeout!");
+          }
+          // Restart the old task where we stopped
+          (*startCertainMode[dMode])();
         }
       }
       btn_old = btn_now;

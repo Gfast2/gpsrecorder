@@ -21,6 +21,7 @@ gps_t * gps;
 
 // binarySemaphore Array to flagging if certain task ended.
 SemaphoreHandle_t taskEndedSemaphoreArr [2]; // xSemaphoreCreateBinary();
+SemaphoreHandle_t sdTskEndedSemaphore;
 
 // Function pointer array defining "stop right now mode"
 // fun_ptr is a pointer to function fun()

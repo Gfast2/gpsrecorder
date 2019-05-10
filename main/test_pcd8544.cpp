@@ -85,44 +85,44 @@ void tsk_disp_temp(void *pvParameters) {
 
   display.begin();
   display.setContrast(60);
-  display.display();
-  delay(250); // Splash Photo
-  display.clearDisplay();
+//  display.display();
+//  delay(250); // Splash Photo
+//  display.clearDisplay();
   display.setCursor(0,0);
   display.setTextColor(WHITE, BLACK); // 'inverted' text
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
   ESP_LOGI(TAG, "Display Initialization Task All done!");
 
-	ESP_LOGW(TAG, "task 'tsk_disp_temp' started");
-    while(*( (int *)pvParameters ) == 1) {
-	  if( bInfo.semaphore_bme280 == NULL) {
-        ESP_LOGI(TAG, "Waiting for bme280 sensor info comming.");
-        continue;
-      }
-	  if(xSemaphoreTake(bInfo.semaphore_bme280, 3000/portTICK_RATE_MS) != pdTRUE) {
-        ESP_LOGW(TAG, "Wait for other task free bme280 object accessing failed, wait"\
-            " for next round");
-        continue;
-      }
-      display.clearDisplay();
-      display.setTextSize(1);
-      display.setTextColor(BLACK);
-      println((char *)"Temperature:");
-      display.setTextSize(2);
-      display.setTextColor(WHITE, BLACK);
-      char buffer[12];
-      int ret = snprintf(buffer, sizeof buffer, "%.2fC", bInfo.temperature);
-      println(buffer);
-      display.setTextSize(1);
-      display.setTextColor(BLACK);
-      println((char *)"Humidity:");
-      display.setTextSize(2);
-      display.setTextColor(WHITE, BLACK);
-      ret = snprintf(buffer, sizeof buffer, "%.2f%%", bInfo.humidity);
-      println(buffer);
-      display.display();
-      xSemaphoreGive(bInfo.semaphore_bme280);
-	}
+  ESP_LOGW(TAG, "task 'tsk_disp_temp' started");
+  while(*( (int *)pvParameters ) == 1) {
+    if( bInfo.semaphore_bme280 == NULL) {
+      ESP_LOGI(TAG, "Waiting for bme280 sensor info comming.");
+      continue;
+    }
+    if(xSemaphoreTake(bInfo.semaphore_bme280, 3000/portTICK_RATE_MS) != pdTRUE) {
+      ESP_LOGW(TAG, "Wait for other task free bme280 object accessing failed, wait"\
+          " for next round");
+      continue;
+    }
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(BLACK);
+    println((char *)"Temperature:");
+    display.setTextSize(2);
+    display.setTextColor(WHITE, BLACK);
+    char buffer[12];
+    int ret = snprintf(buffer, sizeof buffer, "%.2fC", bInfo.temperature);
+    println(buffer);
+    display.setTextSize(1);
+    display.setTextColor(BLACK);
+    println((char *)"Humidity:");
+    display.setTextSize(2);
+    display.setTextColor(WHITE, BLACK);
+    ret = snprintf(buffer, sizeof buffer, "%.2f%%", bInfo.humidity);
+    println(buffer);
+    display.display();
+    xSemaphoreGive(bInfo.semaphore_bme280);
+  }
  ESP_LOGI(TAG, "Try to stop Display & its SPI Bus!");
  display.clearDisplay();
  // Here I should let display.stop() return some result infos, in order to
@@ -140,8 +140,8 @@ void task_disp_gps(void *pvParameters) {
 
   display.begin(); // parameter is garbage
   display.setContrast(60);
-  display.display();
-  delay(250); // Splash Photo
+//  display.display();
+//  delay(250); // Splash Photo
   display.clearDisplay();
   display.setCursor(0,0);
   display.setTextColor(WHITE, BLACK); // 'inverted' text
@@ -164,7 +164,7 @@ void task_disp_gps(void *pvParameters) {
           " for next round");
       continue;
     }
-    ESP_LOGI(TAG,"GPS Display update!");
+//    ESP_LOGI(TAG,"GPS Display update!");
     display.clearDisplay();
     print((char *)"Satellites:");
     char buf [25];
