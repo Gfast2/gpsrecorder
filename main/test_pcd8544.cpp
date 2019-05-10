@@ -29,7 +29,6 @@ All text above, and the splash screen must be included in any redistribution
 // https://isocpp.org/wiki/faq/mixing-c-and-cpp#call-cpp
 extern "C" {
   void sd_card_task(void *pvParameters);
-  void task_test_pcd8544(void *pvParameters);
   void tsk_disp_temp(void *pvParameters);
   void task_disp_gps(void *pvParameters);
 }
@@ -83,7 +82,18 @@ static int min(int a, int b) {
 }
 
 void tsk_disp_temp(void *pvParameters) {
-	ESP_LOGW(TAG, "task 'task_display_info'started");
+
+  display.begin();
+  display.setContrast(60);
+  display.display();
+  delay(250); // Splash Photo
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
+  ESP_LOGI(TAG, "Display Initialization Task All done!");
+
+	ESP_LOGW(TAG, "task 'tsk_disp_temp' started");
     while(*( (int *)pvParameters ) == 1) {
 	  if( bInfo.semaphore_bme280 == NULL) {
         ESP_LOGI(TAG, "Waiting for bme280 sensor info comming.");
@@ -114,17 +124,31 @@ void tsk_disp_temp(void *pvParameters) {
       xSemaphoreGive(bInfo.semaphore_bme280);
 	}
  ESP_LOGI(TAG, "Try to stop Display & its SPI Bus!");
+ display.clearDisplay();
  // Here I should let display.stop() return some result infos, in order to
  // decide if or not do following steps, like if or not should I call SD card task
  display.stop();
- bInfo.semaphore_bme280 = NULL;
- xTaskCreate(&sd_card_task, "sd_card_task", 8048, NULL, 5, NULL);
- ESP_LOGI(TAG, "Display Info Task get deleted");
+// bInfo.semaphore_bme280 = NULL;
+// xTaskCreate(&sd_card_task, "sd_card_task", 8048, NULL, 5, NULL);
+ ESP_LOGI(TAG, "Display Temperature Task get deleted");
+ xSemaphoreGive(taskEndedSemaphoreArr[TEMPERATUREANDHUMDIDITY]);
  vTaskDelete(NULL);
 }
 
 // Display GPS Informations
 void task_disp_gps(void *pvParameters) {
+
+  display.begin(); // parameter is garbage
+  display.setContrast(60);
+  display.display();
+  delay(250); // Splash Photo
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
+  ESP_LOGI(TAG, "Display Initialization Task All done!");
+
+
   ESP_LOGI(TAG, "Display GPS information.");
   // TODO: Available satellites
   display.clearDisplay();
@@ -140,6 +164,7 @@ void task_disp_gps(void *pvParameters) {
           " for next round");
       continue;
     }
+    ESP_LOGI(TAG,"GPS Display update!");
     display.clearDisplay();
     print((char *)"Satellites:");
     char buf [25];
@@ -163,26 +188,9 @@ void task_disp_gps(void *pvParameters) {
     xSemaphoreGive(gps->semaphore_gps);
     vTaskDelay(1000/portTICK_RATE_MS);
   }
-
-  ESP_LOGI(TAG, "Display GPS information Task terminated.");
-  vTaskDelete(NULL);
-}
-
-void task_test_pcd8544(void *pvParameters)   {
-  display.begin();
-  display.setContrast(60);
-  display.display();
-  delay(250); // Splash Photo
   display.clearDisplay();
-  display.setCursor(0,0);
-  display.setTextColor(WHITE, BLACK); // 'inverted' text
-  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
-  ESP_LOGI(TAG, "Display Initialization Task All done!");
-
-  // trigger another task and let it pull the information later.
-  xTaskCreate(&tsk_disp_temp, "task_display_info", 8048, pvParameters, 5, NULL);
-//  xTaskCreate(&task_disp_gps, "task_disp_gps", 8048, NULL, 5, NULL);
-  ESP_LOGW(TAG, "Display init task ended");
-  // TODO: Finish this task
+  display.stop();
+  ESP_LOGI(TAG, "Display GPS information Task terminated.");
+  xSemaphoreGive(taskEndedSemaphoreArr[GPS_INFO_DETAIL]);
   vTaskDelete(NULL);
 }

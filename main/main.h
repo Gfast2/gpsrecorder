@@ -30,6 +30,9 @@ void(*stopCertainMode[2])(void); // length is the same as "enum displayMode"
 // Function pointer array defining "start certain mode"
 void(*startCertainMode[2])(void); // length is the same as "enum displayMode"
 
+// Which display mode we are in right now
+int dMode;
+
 // Temperature task
 void task_bme280_normal_mode(void *pvParameters); // TODO: This should be moved to its own unit later
 

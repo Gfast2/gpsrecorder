@@ -213,7 +213,6 @@ void task_bme280_forced_mode(void *ignore) {
 
 //static char tag[] = "mpcd";
 
-extern void task_test_pcd8544(void *pvParameters);
 extern void sd_card_task(void *pvParameters);
 //extern void task_scroll_text(void *ignore);
 extern void gps_clock_task(void *pvParameters);
@@ -228,17 +227,20 @@ extern void task_disp_gps(void *pvParameters);
 // the next, or do other things, like make a gps coordinate snapshot.
 // TODO: Stop diplaying temprature/Humidity
 void stop_mode_temp(void) {
+  ESP_LOGI(TAG, "stop_mode_temp");
   loopholder_bme280 = 0; // Here I stop temperature reading Task
   loopholder_display = 0;// Here I stop Display Task
 }
 
 // Stop displaying GPS detailed information
 void stop_mode_gps_detail(void) {
+  ESP_LOGI(TAG, "stop_mode_gps_detail");
   loopholder_display = 0;// Here I stop Display Task
 }
 
 // Start mode display temperature/Humidity
 void start_mode_temp(void) {
+  ESP_LOGI(TAG, "start_mode_temp");
   loopholder_bme280 = 1;
   loopholder_display = 1;
   xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
@@ -247,6 +249,7 @@ void start_mode_temp(void) {
 
 // Start mode display gps information
 void start_mode_gps_detail(void) {
+  ESP_LOGI(TAG, "start_mode_gps_detail");
   loopholder_display = 1;
   xTaskCreate(&task_disp_gps, "task_disp_gps", 8048, &loopholder_display, 5, NULL);
 }
@@ -261,8 +264,9 @@ void app_main(void)
   gps = pvPortMalloc(sizeof(gps_t)); // define this gps object
   // Tipp: xTaskCreate( vTaskCode, "NAME", STACK_SIZE, NULL, tskIDLE_PRIORITY, &xHandle );
   xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
-  xTaskCreate(gps_clock_task, "task_gps", 4096, NULL, 5, NULL); // Comment back if I got both SD & Display works together
-  xTaskCreate(&task_test_pcd8544, "task_pcd8544_display", 8048, &loopholder_display, 5, NULL);
+  xTaskCreate(gps_clock_task, "task_gps", 4096, NULL, 5, NULL);
+  xTaskCreate(&tsk_disp_temp, "tsk_disp_temp", 8048, &loopholder_display, 5, NULL);
+  dMode = TEMPERATUREANDHUMDIDITY;
 
   gpio_pad_select_gpio(LCD_LIGHT);
   gpio_set_direction(LCD_LIGHT, GPIO_MODE_OUTPUT);
@@ -292,18 +296,14 @@ void app_main(void)
   int longPressFlag = false;
   while(1) {
     btn_now = gpio_get_level(BTN);
-//    ESP_LOGI(TAG, "BTN: %d", btn_now);
     if(btn_now != btn_old){
 //      ESP_LOGI(TAG, "Get New State");
       if(btn_now == 1){ // btn pressed down
         ESP_LOGI(TAG, "BTN get pressed down.");
-        // TODO: Start checking how long have the button get pressed down.
-        // TODO: When the button get released after more then 1 second, then go to the next display mode.
-        // TODO: When the button get released in less then 1 second, do the gps coordinate snapshot
-//        vTaskDelete( xHandle_bme280 ); // TODO: free in this task located heap memory
         btn_long_press_old = xTaskGetTickCount();
         longPressFlag = false;
       } else { // btn released
+        // When the button get released in less then 1 second, do the gps coordinate snapshot
         if(abs(xTaskGetTickCount()-btn_long_press_old) < 1000/portTICK_PERIOD_MS
             && !longPressFlag){ // time to make a gps snapshot
           ESP_LOGI(TAG, "Triggered a snapshot");
@@ -321,19 +321,31 @@ void app_main(void)
 //          (unsigned long)(1000/portTICK_PERIOD_MS)
 //          );
 
+      // When the button get released after more then 1 second, then go to the next display mode.
       if(abs(xTaskGetTickCount()-btn_long_press_old) > 1000/portTICK_PERIOD_MS){
         ESP_LOGI(TAG, "long btn press get triggered");
         // TODO: go to the next display mode
+        // TODO: Stop the right now mode
+        (*stopCertainMode[dMode])();
+        if(xSemaphoreTake(taskEndedSemaphoreArr[dMode], 3000/portTICK_RATE_MS) != pdTRUE) {
+          ESP_LOGW(TAG, "Wait for other task finish there job timeout!");
+        }
+        if(dMode == 1) {
+          dMode = 0;
+        } else {
+          dMode++;
+        }
+        (*startCertainMode[dMode])();
+        // TODO: Start the next mode
         btn_long_press_old=xTaskGetTickCount(); // Update timer preparing trigger the next long btn press event
         longPressFlag = true;
       }
     }
     else {
-//      ESP_LOGI(TAG, "Old State");
+//      ESP_LOGI(TAG, "Button stays unpressed.");
     }
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
-
   printf("the damme esp32's main reach end!\n");
 }
 

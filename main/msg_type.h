@@ -117,8 +117,8 @@ typedef struct {
 
 // Mode the system need to handle
 enum displayMode {
-  GPS_INFO_DETAIL = 0,
-  TEMPERATUREANDHUMDIDITY,
+  TEMPERATUREANDHUMDIDITY = 0,
+  GPS_INFO_DETAIL,
 //  SPEED,
 //  SHOWLASTGPSLOG
 };
