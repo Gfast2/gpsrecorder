@@ -112,24 +112,35 @@ void sd_card_task(void *pvParameters){
       ESP_LOGE(TAG, "Failed to open file for reading");
       return;
   }
-  char line[64];
-  fgets(line, sizeof(line), f);
-  fclose(f);
+//  char line[64];
+//  fgets(line, sizeof(line), f);
+//  fclose(f);
   // strip newline
-  char* pos = strchr(line, '\n');
-  if (pos) {
-      *pos = '\0';
-  }
-  ESP_LOGI(TAG, "Read from file: '%s'", line);
+//  char* pos = strchr(line, '\n');
+//  if (pos) {
+//      *pos = '\0';
+//  }
+
+  // Read the last line content
+  // Each line will have max. 45 Characters till 2019-5-10, so define a 55 c Buffer
+  static const long max_len = 55+ 1;  // define the max length of the line to read
+  char buff[max_len + 1];             // define the buffer and allocate the length
+  fseek(f, -max_len, SEEK_END);            // set pointer to the end of file minus the length you need. Presumably there can be more than one new line character
+  fread(buff, max_len-1, 1, f);            // read the contents of the file starting from where fseek() positioned us
+  fclose(f);                               // close the file
+  buff[max_len-1] = '\0';                   // close the string
+  char *last_newline = strrchr(buff, '\n'); // find last occurrence of newlinw
+  char *last_line = last_newline+1;         // jump to it
+
+//  printf("captured: [%s]\n", last_line);    // captured: [472977827]
+
+
+  ESP_LOGI(TAG, "Read from file: '%s'", last_line);
 
   // All done, unmount partition and disable SDMMC or SPI peripheral
   esp_vfs_fat_sdmmc_unmount();
   ESP_LOGI(TAG, "Card unmounted");
-
-  // TODO: Here I start the bme280 & display task after each other (again)
-  loopholder_display = 1; // Revert these loop holder in order to make them working again
-  loopholder_bme280 = 1;
-  xTaskCreate(&task_test_pcd8544, "task_pcd8544_display", 8048, &loopholder_display, 5, NULL);
-  xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
+  ESP_LOGI(TAG, "Now Sd card finish its job!");
+  xSemaphoreGive(sdTskEndedSemaphore);
   vTaskDelete(NULL);
 }
