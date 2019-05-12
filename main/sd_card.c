@@ -33,7 +33,7 @@ extern void task_test_pcd8544(void *pvParameters);
 
 void sd_card_task(void *pvParameters){
   ESP_LOGI(TAG, "Initializing SD card");
-  ESP_LOGI(TAG, "Using SPI peripheral");
+//  ESP_LOGI(TAG, "Using SPI peripheral");
 
   sdmmc_host_t host = SDSPI_HOST_DEFAULT();
   sdspi_slot_config_t slot_config = SDSPI_SLOT_CONFIG_DEFAULT();
@@ -68,58 +68,35 @@ void sd_card_task(void *pvParameters){
           ESP_LOGE(TAG, "Failed to initialize the card (%s). "
               "Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
       }
-      return;
+      ESP_LOGE(TAG, "Terminate SD Card Task and let the code ride along");
+      xSemaphoreGive(sdTskEndedSemaphore);
+      vTaskDelete(NULL);
   }
 
   // Card has been initialized, print its properties
   sdmmc_card_print_info(stdout, card);
 
-  // Use POSIX and C standard library functions to work with files.
-  // First create a file.
-  ESP_LOGI(TAG, "Opening file");
   FILE* f = fopen("/sdcard/gps.txt", "a");
   if (f == NULL) {
       ESP_LOGE(TAG, "Failed to open file for writing");
-      return;
+      ESP_LOGE(TAG, "Terminate SD Card Task and let the code ride along");
+      xSemaphoreGive(sdTskEndedSemaphore);
+      vTaskDelete(NULL);
   }
-//  fprintf(f, "Hello %s!\n", card->cid.name);
-  // TODO: Write gps information: time-latitude-longitude
   fprintf(f, "%d-%d-%dT%d:%d:%d:%d@%f,%f\n",
       gps->year, gps->month,gps->day,
       gps->hour, gps->minute,gps->second, gps->microseconds,
       gps->latitude, gps->longitude);
   fclose(f);
-  ESP_LOGI(TAG, "gps file updated");
-
-  // Check if destination file exists before renaming
-//  struct stat st;
-//  if (stat("/sdcard/foo.txt", &st) == 0) {
-//      // Delete it if it exists
-//      unlink("/sdcard/foo.txt");
-//  }
-//
-//  // Rename original file
-//  ESP_LOGI(TAG, "Renaming file");
-//  if (rename("/sdcard/hello.txt", "/sdcard/foo.txt") != 0) {
-//      ESP_LOGE(TAG, "Rename failed");
-//      return;
-//  }
 
   // Open renamed file for reading
-  ESP_LOGI(TAG, "Reading file");
   f = fopen("/sdcard/gps.txt", "r");
   if (f == NULL) {
       ESP_LOGE(TAG, "Failed to open file for reading");
-      return;
+      ESP_LOGE(TAG, "Terminate SD Card Task and let the code ride along");
+      xSemaphoreGive(sdTskEndedSemaphore);
+      vTaskDelete(NULL);
   }
-//  char line[64];
-//  fgets(line, sizeof(line), f);
-//  fclose(f);
-  // strip newline
-//  char* pos = strchr(line, '\n');
-//  if (pos) {
-//      *pos = '\0';
-//  }
 
   // Read the last line content
   // Each line will have max. 45 Characters till 2019-5-10, so define a 55 c Buffer
@@ -132,14 +109,10 @@ void sd_card_task(void *pvParameters){
   char *last_newline = strrchr(buff, '\n'); // find last occurrence of newlinw
   char *last_line = last_newline+1;         // jump to it
 
-//  printf("captured: [%s]\n", last_line);    // captured: [472977827]
-
-
   ESP_LOGI(TAG, "Read from file: '%s'", last_line);
 
   // All done, unmount partition and disable SDMMC or SPI peripheral
   esp_vfs_fat_sdmmc_unmount();
-  ESP_LOGI(TAG, "Card unmounted");
   ESP_LOGI(TAG, "Now Sd card finish its job!");
   xSemaphoreGive(sdTskEndedSemaphore);
   vTaskDelete(NULL);
