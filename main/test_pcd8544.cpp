@@ -81,14 +81,37 @@ static int min(int a, int b) {
 	return b;
 }
 
+void showSDCardIOResult() {
+  ESP_LOGI(TAG, "Hallo There !!!!!!!!!!!!!!!!!!!!!!!!!!!, snapshotFlag: %d", snapshotFlag);
+  if(snapshotFlag) {
+    display.display();
+    display.clearDisplay();
+    display.setTextColor(BLACK);
+    display.setTextSize(2);
+    println("card");
+    println("save");
+    if(coordinateSaveSucceed) {
+      ESP_LOGI(TAG, "Save coordinate to sd card succeed");
+      println("OK");
+    } else {
+      ESP_LOGI(TAG, "Save coordinate to sd card failed");
+      println("failed");
+    }
+    display.display();
+    delay(1000);
+    display.clearDisplay();
+    snapshotFlag = false;
+  }
+  display.setCursor(0,0);
+}
+
 void tsk_disp_temp(void *pvParameters) {
 
   display.begin();
   display.setContrast(60);
-//  display.display();
-//  delay(250); // Splash Photo
-//  display.clearDisplay();
   display.setCursor(0,0);
+  // TODO: Detect if made a snapshot, if yes, show sd card i/o result
+  showSDCardIOResult();
   display.setTextColor(WHITE, BLACK); // 'inverted' text
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
   ESP_LOGI(TAG, "Display Initialization Task All done!");
@@ -140,8 +163,7 @@ void task_disp_gps(void *pvParameters) {
 
   display.begin(); // parameter is garbage
   display.setContrast(60);
-//  display.display();
-//  delay(250); // Splash Photo
+  showSDCardIOResult();
   display.clearDisplay();
   display.setCursor(0,0);
   display.setTextColor(WHITE, BLACK); // 'inverted' text

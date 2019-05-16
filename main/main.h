@@ -34,6 +34,12 @@ void(*startCertainMode[2])(void); // length is the same as "enum displayMode"
 // Which display mode we are in right now
 int dMode;
 
+// Save SD Card failed or succeed, boolean
+int coordinateSaveSucceed;
+
+// trigger a snapshot flag, when trigger a snapshot, flip this to true
+int snapshotFlag;
+
 // Temperature task
 void task_bme280_normal_mode(void *pvParameters); // TODO: This should be moved to its own unit later
 

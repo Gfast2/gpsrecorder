@@ -171,7 +171,6 @@ void task_bme280_forced_mode(void *ignore) {
 	struct bme280_t bme280 = {
 		.bus_write = BME280_I2C_bus_write,
 		.bus_read = BME280_I2C_bus_read,
-//		.dev_addr = BME280_I2C_ADDRESS2,
 		.dev_addr = BME280_I2C_ADDRESS1,
 		.delay_msec = BME280_delay_msek
 	};
@@ -259,6 +258,8 @@ void app_main(void)
 //  TaskHandle_t xHandle_bme280;
   loopholder_bme280 = 1;
   loopholder_display = 1;
+  coordinateSaveSucceed = true;
+  snapshotFlag = false;
   gps = pvPortMalloc(sizeof(gps_t)); // define this gps object
   // Tipp: xTaskCreate( vTaskCode, "NAME", STACK_SIZE, NULL, tskIDLE_PRIORITY, &xHandle );
   xTaskCreate(&task_bme280_normal_mode, "bme280_normal_mode",  2048, &loopholder_bme280, 6, NULL);
@@ -302,10 +303,12 @@ void app_main(void)
         btn_long_press_old = xTaskGetTickCount();
         longPressFlag = false;
       } else { // btn released
+        ESP_LOGI(TAG, "BTN get released.");
         // When the button get released in less then 1 second, do the gps coordinate snapshot
         if(abs(xTaskGetTickCount()-btn_long_press_old) < 1000/portTICK_PERIOD_MS
             && !longPressFlag){ // time to make a gps snapshot
           ESP_LOGI(TAG, "Triggered a snapshot");
+          snapshotFlag = true;
           // Trigger a snapshot.
           // Stop the right now mode (Kill tasks that should be stopped)
           (*stopCertainMode[dMode])();
@@ -319,6 +322,9 @@ void app_main(void)
           }
           // Restart the old task where we stopped
           (*startCertainMode[dMode])();
+
+
+
         }
       }
       btn_old = btn_now;

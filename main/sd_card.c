@@ -69,6 +69,7 @@ void sd_card_task(void *pvParameters){
               "Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
       }
       ESP_LOGE(TAG, "Terminate SD Card Task and let the code ride along");
+      coordinateSaveSucceed = false;
       xSemaphoreGive(sdTskEndedSemaphore);
       vTaskDelete(NULL);
   }
@@ -80,6 +81,7 @@ void sd_card_task(void *pvParameters){
   if (f == NULL) {
       ESP_LOGE(TAG, "Failed to open file for writing");
       ESP_LOGE(TAG, "Terminate SD Card Task and let the code ride along");
+      coordinateSaveSucceed = false;
       xSemaphoreGive(sdTskEndedSemaphore);
       vTaskDelete(NULL);
   }
@@ -94,6 +96,7 @@ void sd_card_task(void *pvParameters){
   if (f == NULL) {
       ESP_LOGE(TAG, "Failed to open file for reading");
       ESP_LOGE(TAG, "Terminate SD Card Task and let the code ride along");
+      coordinateSaveSucceed = false;
       xSemaphoreGive(sdTskEndedSemaphore);
       vTaskDelete(NULL);
   }
@@ -114,6 +117,7 @@ void sd_card_task(void *pvParameters){
   // All done, unmount partition and disable SDMMC or SPI peripheral
   esp_vfs_fat_sdmmc_unmount();
   ESP_LOGI(TAG, "Now Sd card finish its job!");
+  coordinateSaveSucceed = true;
   xSemaphoreGive(sdTskEndedSemaphore);
   vTaskDelete(NULL);
 }
