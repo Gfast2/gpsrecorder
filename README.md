@@ -1,11 +1,40 @@
 # Gpsrecorder
 
+Gpsrecorder will help me record a GPS coordinate by short press the button on its front panel. The
+long button press will let it change its display/running mode. The possible mode and their use is as
+follow:
+- _Mode 1:_ Showing Temperature and Humidity
+- _Mode 2:_ Showing detailed recorded GPS information
+
+
 ## Note for development
 - Long press make the Display change to "Next" view
 - After make a GPS coordinate snapshot restart the cached taskes
-- Test for Version 1.0.0
 
 # Road Map
+
+_For Version 1.1.0_
+- Display mode "Display Speed" (km/h)
+- Display mode "Time" (Time, Month & Dan are bigger Font, Year are small font)
+- Display mode "Last two recorded coordinate"
+- Bugger the driver of the Display, make the Display preserve its content during display spi bus unmounted
+- Make a logo for this project
+- Move Temperature Logic into its own unit
+
+_For Version 1.2.0_
+- Try to map psram into map look-up table
+- Wifi access point setup (DHCP Server Included)
+- Let Web-Server Access SD Card content when get a get request
+- Very Basic HTML Page that content all last 300 Saved coordinates (Limitation is only in HTML tag element limitition)
+
+_For Version 1.3.0_
+- Double click to turn Display Backlight on/off
+- Tripple click to turn Wifi Access Point & Webserver on/off
+- Solder RTC Curcuit
+- Add process to read RTC Module's time, and make it as the new System time. When got time from GPS Module, do time sync to RTC Module
+- Checkout if there is still free capacity
+---
+
 - Use [Task notifications](https://www.freertos.org/RTOS-task-notifications.html) to emmit task change events (replace semaphore solutions)
 
 ## Work log
@@ -18,3 +47,9 @@
 - 2019-5-1: Rewrite the communication model between temperature Task & Display Task
 - 2019-5-5: For each button push trigger either a short button event or long button event. only one of them
 ----
+
+### Version 1.0.1
+- 2019-5-12: Protect if the sd Card IO Failed. If software can't access SD Card save snapshot, it will terminate the task, but not return the task & crash the software
+- 2019-5-12: After trying to save coordinate to sd card, show the save result
+
+### Version 1.1.0
