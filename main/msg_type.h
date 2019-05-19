@@ -119,8 +119,8 @@ typedef struct {
 enum displayMode {
   TEMPERATUREANDHUMDIDITY = 0,
   GPS_INFO_DETAIL,
-//  SPEED,
-//  SHOWLASTGPSLOG
+  SPEED,
+  DATETIME,
 };
 
 #endif /* MAIN_IOC_110_TYPE_H_ */

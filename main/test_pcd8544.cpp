@@ -31,6 +31,9 @@ extern "C" {
   void sd_card_task(void *pvParameters);
   void tsk_disp_temp(void *pvParameters);
   void task_disp_gps(void *pvParameters);
+  void task_disp_speed(void *pvParameters);
+  void task_disp_timedate(void *pvParameters);
+
 }
 
 static char TAG [] = "DISPLAY";
@@ -216,3 +219,103 @@ void task_disp_gps(void *pvParameters) {
   xSemaphoreGive(taskEndedSemaphoreArr[GPS_INFO_DETAIL]);
   vTaskDelete(NULL);
 }
+
+
+// Display GPS speed
+void task_disp_speed(void *pvParameters) {
+  display.begin(); // parameter is garbage
+  display.setContrast(60);
+  showSDCardIOResult();
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
+  ESP_LOGI(TAG, "Display Initialization Task All done!");
+
+
+  ESP_LOGI(TAG, "Display Speed.");
+  // TODO: Available satellites
+  display.clearDisplay();
+  display.setTextSize(2);
+//  display.setTextColor(BLACK);
+  while(*( (int *)pvParameters ) == 1) {
+    if(gps->semaphore_gps == NULL) {
+      ESP_LOGI(TAG, "Waiting for GPS info comming.");
+      continue;
+    }
+    if(xSemaphoreTake(gps->semaphore_gps, 3000/portTICK_RATE_MS) != pdTRUE) {
+      ESP_LOGW(TAG, "Wait for other task free gps object accessing failed, wait"\
+          " for next round");
+      continue;
+    }
+//    ESP_LOGI(TAG,"GPS Display update!");
+    display.clearDisplay();
+    display.setTextSize(2);
+    println((char *)"Speed:");
+    char buf [25];
+    display.setTextSize(3);
+    int ret = snprintf(buf, sizeof buf, "%.1f", gps->speed_kph);
+    println(buf);
+    display.setTextSize(1);
+    ret = snprintf(buf, sizeof buf, "km/h");
+    print(buf);
+    display.display();
+    xSemaphoreGive(gps->semaphore_gps);
+    ESP_LOGI(TAG, "Speed: %.1f", gps->speed_kph);
+    vTaskDelay(1000/portTICK_RATE_MS);
+  }
+  display.clearDisplay();
+  display.stop();
+  ESP_LOGI(TAG, "Display speed Task terminated.");
+  xSemaphoreGive(taskEndedSemaphoreArr[SPEED]);
+  vTaskDelete(NULL);
+}
+
+// Display time & date
+void task_disp_timedate(void *pvParameters) {
+  display.begin(); // parameter is garbage
+  display.setContrast(60);
+  showSDCardIOResult();
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
+  ESP_LOGI(TAG, "Display Initialization Task All done!");
+
+
+  ESP_LOGI(TAG, "Display Speed.");
+  // TODO: Available satellites
+  display.clearDisplay();
+  display.setTextSize(2);
+  while(*( (int *)pvParameters ) == 1) {
+    if(gps->semaphore_gps == NULL) {
+      ESP_LOGI(TAG, "Waiting for GPS info comming.");
+      continue;
+    }
+    if(xSemaphoreTake(gps->semaphore_gps, 3000/portTICK_RATE_MS) != pdTRUE) {
+      ESP_LOGW(TAG, "Wait for other task free gps object accessing failed, wait"\
+          " for next round");
+      continue;
+    }
+//    ESP_LOGI(TAG,"GPS Display update!");
+    display.clearDisplay();
+    display.setTextSize(1);
+    println((char *)"Datetime:");
+    char buf [25];
+    display.setTextSize(1);
+    int ret = snprintf(buf, sizeof buf, "%d-%d-%d", gps->year, gps->month, gps->day);
+    println(buf);
+    display.setTextSize(2);
+    ret = snprintf(buf, sizeof buf, "%d:%d:%d", gps->hour, gps->minute, gps->second);
+    print(buf);
+    display.display();
+    xSemaphoreGive(gps->semaphore_gps);
+    vTaskDelay(1000/portTICK_RATE_MS);
+  }
+  display.clearDisplay();
+  display.stop();
+  ESP_LOGI(TAG, "Display date time Task terminated.");
+  xSemaphoreGive(taskEndedSemaphoreArr[DATETIME]);
+  vTaskDelete(NULL);
+}
+

@@ -20,16 +20,16 @@ int loopholder_display;
 gps_t * gps;
 
 // binarySemaphore Array to flagging if certain task ended.
-SemaphoreHandle_t taskEndedSemaphoreArr [2]; // xSemaphoreCreateBinary();
+SemaphoreHandle_t taskEndedSemaphoreArr [4]; // xSemaphoreCreateBinary();
 SemaphoreHandle_t sdTskEndedSemaphore;
 
 // Function pointer array defining "stop right now mode"
 // fun_ptr is a pointer to function fun()
 //void (*fun_ptr)(int) = &fun;
-void(*stopCertainMode[2])(void); // length is the same as "enum displayMode"
+void(*stopCertainMode[4])(void); // length is the same as "enum displayMode"
 
 // Function pointer array defining "start certain mode"
-void(*startCertainMode[2])(void); // length is the same as "enum displayMode"
+void(*startCertainMode[4])(void); // length is the same as "enum displayMode"
 
 // Which display mode we are in right now
 int dMode;

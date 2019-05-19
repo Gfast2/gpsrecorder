@@ -215,7 +215,8 @@ extern void sd_card_task(void *pvParameters);
 extern void gps_clock_task(void *pvParameters);
 extern void tsk_disp_temp(void *pvParameters);
 extern void task_disp_gps(void *pvParameters);
-
+extern void task_disp_speed(void *pvParameters);
+extern void task_disp_timedate(void *pvParameters);
 // On board LED for Blink is on GPIO 21
 #define LCD_LIGHT 5 // LCD Back Light
 #define BTN 19      // Button on front panel
@@ -235,6 +236,17 @@ void stop_mode_gps_detail(void) {
   loopholder_display = 0;// Here I stop Display Task
 }
 
+// Stop displaying gps speed
+void stop_mode_speed(void) {
+  ESP_LOGI(TAG, "stop_mode_speed");
+  loopholder_display = 0;
+}
+
+void stop_mode_timedate(void) {
+  ESP_LOGI(TAG, "stop_mode_datetime");
+  loopholder_display = 0;
+}
+
 // Start mode display temperature/Humidity
 void start_mode_temp(void) {
   ESP_LOGI(TAG, "start_mode_temp");
@@ -249,6 +261,18 @@ void start_mode_gps_detail(void) {
   ESP_LOGI(TAG, "start_mode_gps_detail");
   loopholder_display = 1;
   xTaskCreate(&task_disp_gps, "task_disp_gps", 8048, &loopholder_display, 5, NULL);
+}
+
+void start_mode_speed(void) {
+  ESP_LOGI(TAG, "start_mode_speed");
+  loopholder_display = 1;
+  xTaskCreate(&task_disp_speed, "task_disp_speed", 8048, &loopholder_display, 5, NULL);
+}
+
+void start_mode_timedate(void) {
+  ESP_LOGI(TAG, "start_mode_speed");
+  loopholder_display = 1;
+  xTaskCreate(&task_disp_timedate, "task_disp_timedate", 8048, &loopholder_display, 5, NULL);
 }
 
 void app_main(void)
@@ -279,8 +303,12 @@ void app_main(void)
 
   stopCertainMode[0] = &stop_mode_temp;
   stopCertainMode[1] = &stop_mode_gps_detail;
+  stopCertainMode[2] = &stop_mode_speed;
+  stopCertainMode[3] = &stop_mode_timedate;
   startCertainMode[0] = &start_mode_temp;
   startCertainMode[1] = &start_mode_gps_detail;
+  startCertainMode[2] = &start_mode_speed;
+  startCertainMode[3] = &start_mode_timedate;
 
   // TODO: Would it better, if we wanna pack this in "btn_task"?
   // Button read
@@ -322,9 +350,6 @@ void app_main(void)
           }
           // Restart the old task where we stopped
           (*startCertainMode[dMode])();
-
-
-
         }
       }
       btn_old = btn_now;
@@ -339,19 +364,16 @@ void app_main(void)
       // When the button get released after more then 1 second, then go to the next display mode.
       if(abs(xTaskGetTickCount()-btn_long_press_old) > 1000/portTICK_PERIOD_MS){
         ESP_LOGI(TAG, "long btn press get triggered");
-        // TODO: go to the next display mode
-        // TODO: Stop the right now mode
         (*stopCertainMode[dMode])();
         if(xSemaphoreTake(taskEndedSemaphoreArr[dMode], 3000/portTICK_RATE_MS) != pdTRUE) {
           ESP_LOGW(TAG, "Wait for other task finish there job timeout!");
         }
-        if(dMode == 1) {
+        if(dMode == 3) {
           dMode = 0;
         } else {
           dMode++;
         }
         (*startCertainMode[dMode])();
-        // TODO: Start the next mode
         btn_long_press_old=xTaskGetTickCount(); // Update timer preparing trigger the next long btn press event
         longPressFlag = true;
       }
@@ -363,4 +385,3 @@ void app_main(void)
   }
   printf("the damme esp32's main reach end!\n");
 }
-
