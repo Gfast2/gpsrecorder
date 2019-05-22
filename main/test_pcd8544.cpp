@@ -33,6 +33,7 @@ extern "C" {
   void task_disp_gps(void *pvParameters);
   void task_disp_speed(void *pvParameters);
   void task_disp_timedate(void *pvParameters);
+  void task_disp_coordinate(void *pvParameters);
 
 }
 
@@ -282,9 +283,7 @@ void task_disp_timedate(void *pvParameters) {
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
   ESP_LOGI(TAG, "Display Initialization Task All done!");
 
-
   ESP_LOGI(TAG, "Display Speed.");
-  // TODO: Available satellites
   display.clearDisplay();
   display.setTextSize(2);
   while(*( (int *)pvParameters ) == 1) {
@@ -316,6 +315,50 @@ void task_disp_timedate(void *pvParameters) {
   display.stop();
   ESP_LOGI(TAG, "Display date time Task terminated.");
   xSemaphoreGive(taskEndedSemaphoreArr[DATETIME]);
+  vTaskDelete(NULL);
+}
+
+// Display in sd card save gps coordinate
+void task_disp_coordinate(void *pvParameters) {
+  display.begin(); // parameter is garbage
+  display.setContrast(60);
+  showSDCardIOResult();
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
+  ESP_LOGI(TAG, "Display Initialization Task All done!");
+
+
+  ESP_LOGI(TAG, "Display sd card save coordinate.");
+  display.clearDisplay();
+  display.setTextSize(1);
+  println((char *)"Processing...");
+  display.display();
+  ESP_LOGI(TAG, "value of pvParameters: %d",*(int *)pvParameters);
+  while(*(int *)pvParameters == 1) { // Call this global defined variable in such a direct manner is absolute bad practice, refactorying this!
+    display.clearDisplay();
+    // TODO: Read notification from SD card read last two record task!
+    char buf [SD2DISPLAY_BUF * 2];
+    if( xQueueReceive( lastTwoCoordRecord, buf, 2000/portTICK_PERIOD_MS) )
+    {
+       // pcRxedMessage now points to the struct AMessage variable posted
+       // by vATask.
+      println(buf);
+      display.display();
+      ESP_LOGE(TAG, "Wait for sd card deliver gps coordiante read result timeout");
+    } else {
+      // TODO: // Deinit this message queue
+      // TODO: Try to read content of the buff & display
+//      println(buf);
+//      display.display();
+    }
+    vTaskDelay(100/portTICK_RATE_MS);
+  }
+  display.clearDisplay();
+  display.stop();
+  ESP_LOGI(TAG, "Display sd card saved record terminated.");
+  xSemaphoreGive(taskEndedSemaphoreArr[SAVEDCOORDINATE]);
   vTaskDelete(NULL);
 }
 

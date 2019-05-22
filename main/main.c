@@ -211,12 +211,14 @@ void task_bme280_forced_mode(void *ignore) {
 //static char tag[] = "mpcd";
 
 extern void sd_card_task(void *pvParameters);
-//extern void task_scroll_text(void *ignore);
 extern void gps_clock_task(void *pvParameters);
 extern void tsk_disp_temp(void *pvParameters);
 extern void task_disp_gps(void *pvParameters);
 extern void task_disp_speed(void *pvParameters);
 extern void task_disp_timedate(void *pvParameters);
+extern void tsk_sd_getcoordinate(void *pvParameters);
+extern void task_disp_coordinate(void *pvParameters);
+
 // On board LED for Blink is on GPIO 21
 #define LCD_LIGHT 5 // LCD Back Light
 #define BTN 19      // Button on front panel
@@ -247,6 +249,12 @@ void stop_mode_timedate(void) {
   loopholder_display = 0;
 }
 
+void stop_mode_coordinate(void) {
+  ESP_LOGI(TAG, "stop_mode_coordinate");
+  // TODO: Should I Stop task that read the last two record from SD card?
+  loopholder_display = 0;
+}
+
 // Start mode display temperature/Humidity
 void start_mode_temp(void) {
   ESP_LOGI(TAG, "start_mode_temp");
@@ -273,6 +281,22 @@ void start_mode_timedate(void) {
   ESP_LOGI(TAG, "start_mode_speed");
   loopholder_display = 1;
   xTaskCreate(&task_disp_timedate, "task_disp_timedate", 8048, &loopholder_display, 5, NULL);
+}
+
+void start_mode_coordinate(void) {
+  ESP_LOGI(TAG, "start_mode_coordinate. Boooo");
+  loopholder_display = 1;
+
+  // TODO: Then I should deallocated the notification message object in display task, after it got/display the correct result
+  // TODO: define & Start a new task read last two record from SD card
+  // I should init the notification message object here! (let the involved task can use it)
+  lastTwoCoordRecord = xQueueCreate( 1, sizeof(char) * SD2DISPLAY_BUF * 2 );
+  xTaskCreate(&tsk_sd_getcoordinate, "tsk_sd_getcoordinate", 8048, NULL, 5, NULL);
+  char buf [SD2DISPLAY_BUF * 2];
+  if( xQueuePeek( lastTwoCoordRecord, buf, 5000/portTICK_PERIOD_MS) ){
+    ESP_LOGE(TAG, "Wait for sd card deliver gps coordiante read result timeout, can't start display");
+  }
+  xTaskCreate(&task_disp_coordinate, "task_disp_coordiate", 8048, &loopholder_display, 5, NULL);
 }
 
 void app_main(void)
@@ -305,10 +329,12 @@ void app_main(void)
   stopCertainMode[1] = &stop_mode_gps_detail;
   stopCertainMode[2] = &stop_mode_speed;
   stopCertainMode[3] = &stop_mode_timedate;
+  stopCertainMode[4] = &stop_mode_coordinate;
   startCertainMode[0] = &start_mode_temp;
   startCertainMode[1] = &start_mode_gps_detail;
   startCertainMode[2] = &start_mode_speed;
   startCertainMode[3] = &start_mode_timedate;
+  startCertainMode[4] = &start_mode_coordinate;
 
   // TODO: Would it better, if we wanna pack this in "btn_task"?
   // Button read
@@ -364,11 +390,14 @@ void app_main(void)
       // When the button get released after more then 1 second, then go to the next display mode.
       if(abs(xTaskGetTickCount()-btn_long_press_old) > 1000/portTICK_PERIOD_MS){
         ESP_LOGI(TAG, "long btn press get triggered");
+        ESP_LOGI(TAG, "dMode=%d", dMode);
         (*stopCertainMode[dMode])();
+        ESP_LOGI(TAG, "Finish Stopping");
         if(xSemaphoreTake(taskEndedSemaphoreArr[dMode], 3000/portTICK_RATE_MS) != pdTRUE) {
           ESP_LOGW(TAG, "Wait for other task finish there job timeout!");
         }
-        if(dMode == 3) {
+        ESP_LOGI(TAG, "dMode=%d", dMode);
+        if(dMode == 4) { // TODO: Audo detect how many mode right now available
           dMode = 0;
         } else {
           dMode++;

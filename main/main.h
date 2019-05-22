@@ -20,16 +20,16 @@ int loopholder_display;
 gps_t * gps;
 
 // binarySemaphore Array to flagging if certain task ended.
-SemaphoreHandle_t taskEndedSemaphoreArr [4]; // xSemaphoreCreateBinary();
+SemaphoreHandle_t taskEndedSemaphoreArr [5]; // xSemaphoreCreateBinary();
 SemaphoreHandle_t sdTskEndedSemaphore;
 
 // Function pointer array defining "stop right now mode"
 // fun_ptr is a pointer to function fun()
 //void (*fun_ptr)(int) = &fun;
-void(*stopCertainMode[4])(void); // length is the same as "enum displayMode"
+void(*stopCertainMode[5])(void); // length is the same as "enum displayMode"
 
 // Function pointer array defining "start certain mode"
-void(*startCertainMode[4])(void); // length is the same as "enum displayMode"
+void(*startCertainMode[5])(void); // length is the same as "enum displayMode"
 
 // Which display mode we are in right now
 int dMode;
@@ -42,5 +42,8 @@ int snapshotFlag;
 
 // Temperature task
 void task_bme280_normal_mode(void *pvParameters); // TODO: This should be moved to its own unit later
+
+// task "tsk_sd_getcoordinate" send read result to "task_disp_coordinate"
+QueueHandle_t lastTwoCoordRecord;
 
 #endif

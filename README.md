@@ -14,8 +14,6 @@ follow:
 # Road Map
 
 _For Version 1.1.0_
-- Display mode "Display Speed" (km/h)
-- Display mode "Time" (Time, Month & Dan are bigger Font, Year are small font)
 - Display mode "Last two recorded coordinate"
 - Bugger the driver of the Display, make the Display preserve its content during display spi bus unmounted
 - Make a logo for this project
@@ -26,6 +24,7 @@ _For Version 1.2.0_
 - Wifi access point setup (DHCP Server Included)
 - Let Web-Server Access SD Card content when get a get request
 - Very Basic HTML Page that content all last 300 Saved coordinates (Limitation is only in HTML tag element limitition)
+- Replace function "getFloat" in gps_clock.c by mimia's stock "minmea_tofloat"
 
 _For Version 1.3.0_
 - Double click to turn Display Backlight on/off
@@ -53,3 +52,5 @@ _For Version 1.3.0_
 - 2019-5-12: After trying to save coordinate to sd card, show the save result
 
 ### Version 1.1.0
+- 2019-5-18: Display mode "Display Speed" (km/h)
+- 2019-5-18: Display mode "Time" (Time, Month & Dan are bigger Font, Year are small font)

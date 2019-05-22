@@ -12,6 +12,9 @@ typedef enum {
 	HIGH
 } pinState;
 
+// One GPS Coordinate record line
+#define SD2DISPLAY_BUF 60
+
 typedef struct {
 	double temperature;
 	double pressure;
@@ -121,6 +124,7 @@ enum displayMode {
   GPS_INFO_DETAIL,
   SPEED,
   DATETIME,
+  SAVEDCOORDINATE,
 };
 
 #endif /* MAIN_IOC_110_TYPE_H_ */
