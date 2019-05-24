@@ -86,7 +86,7 @@ static int min(int a, int b) {
 }
 
 void showSDCardIOResult() {
-  ESP_LOGI(TAG, "Hallo There !!!!!!!!!!!!!!!!!!!!!!!!!!!, snapshotFlag: %d", snapshotFlag);
+//  ESP_LOGI(TAG, "Hallo There !!!!!!!!!!!!!!!!!!!!!!!!!!!, snapshotFlag: %d", snapshotFlag);
   if(snapshotFlag) {
     display.display();
     display.clearDisplay();
@@ -150,16 +150,14 @@ void tsk_disp_temp(void *pvParameters) {
     display.display();
     xSemaphoreGive(bInfo.semaphore_bme280);
   }
- ESP_LOGI(TAG, "Try to stop Display & its SPI Bus!");
- display.clearDisplay();
- // Here I should let display.stop() return some result infos, in order to
- // decide if or not do following steps, like if or not should I call SD card task
- display.stop();
-// bInfo.semaphore_bme280 = NULL;
-// xTaskCreate(&sd_card_task, "sd_card_task", 8048, NULL, 5, NULL);
- ESP_LOGI(TAG, "Display Temperature Task get deleted");
- xSemaphoreGive(taskEndedSemaphoreArr[TEMPERATUREANDHUMDIDITY]);
- vTaskDelete(NULL);
+  ESP_LOGI(TAG, "Try to stop Display & its SPI Bus!");
+  display.clearDisplay();
+  // Here I should let display.stop() return some result infos, in order to
+  // decide if or not do following steps, like if or not should I call SD card task
+  display.stop();
+  ESP_LOGI(TAG, "Display Temperature Task get deleted");
+  xSemaphoreGive(taskEndedSemaphoreArr[TEMPERATUREANDHUMDIDITY]);
+  vTaskDelete(NULL);
 }
 
 // Display GPS Informations

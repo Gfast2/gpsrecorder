@@ -201,24 +201,24 @@ void Adafruit_PCD8544::begin(uint8_t contrast, uint8_t bias) {
   display();
 }
 
-void Adafruit_PCD8544::stop() {
-  // TODO: Remove device from the bus
+esp_err_t Adafruit_PCD8544::stop() {
+  // Remove device from the bus
   ESP_LOGI(TAG, "Try to stop PCD8544 Display");
   int ret = spi_bus_remove_device(spi_handle);
   if(ret != ESP_OK) {
     ESP_LOGE(TAG, "Can not remove PCD8544 Display.");
-    // TODO: interrupt this process
-    return;
+    return ESP_FAIL;
   }
 
-  // TODO: Remove the spi bus
+  // Remove the spi bus
   ret = spi_bus_free(HSPI_HOST);
   if(ret != ESP_OK) {
     ESP_LOGE(TAG, "Can not remove SPI Bus HSPI_HOST.");
     // TODO: interrupt this process
-    return;
+    return ESP_FAIL;
   }
   ESP_LOGI(TAG, "Stop Display to using SPI bus & free SPI bus HSPI_HOST succeed!");
+  return ESP_OK;
 }
 
 

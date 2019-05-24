@@ -284,12 +284,9 @@ void start_mode_timedate(void) {
 }
 
 void start_mode_coordinate(void) {
-  ESP_LOGI(TAG, "start_mode_coordinate. Boooo");
+  ESP_LOGI(TAG, "start_mode_coordinate");
   loopholder_display = 1;
-
   // TODO: Then I should deallocated the notification message object in display task, after it got/display the correct result
-  // TODO: define & Start a new task read last two record from SD card
-  // I should init the notification message object here! (let the involved task can use it)
   lastTwoCoordRecord = xQueueCreate( 1, sizeof(char) * SD2DISPLAY_BUF * 2 );
   xTaskCreate(&tsk_sd_getcoordinate, "tsk_sd_getcoordinate", 8048, NULL, 5, NULL);
   char buf [SD2DISPLAY_BUF * 2];
@@ -330,6 +327,7 @@ void app_main(void)
   stopCertainMode[2] = &stop_mode_speed;
   stopCertainMode[3] = &stop_mode_timedate;
   stopCertainMode[4] = &stop_mode_coordinate;
+
   startCertainMode[0] = &start_mode_temp;
   startCertainMode[1] = &start_mode_gps_detail;
   startCertainMode[2] = &start_mode_speed;
@@ -360,18 +358,21 @@ void app_main(void)
         ESP_LOGI(TAG, "BTN get released.");
         // When the button get released in less then 1 second, do the gps coordinate snapshot
         if(abs(xTaskGetTickCount()-btn_long_press_old) < 1000/portTICK_PERIOD_MS
-            && !longPressFlag){ // time to make a gps snapshot
+            && !longPressFlag)
+        { // time to make a gps snapshot
           ESP_LOGI(TAG, "Triggered a snapshot");
           snapshotFlag = true;
           // Trigger a snapshot.
           // Stop the right now mode (Kill tasks that should be stopped)
           (*stopCertainMode[dMode])();
-          if(xSemaphoreTake(taskEndedSemaphoreArr[dMode], 3000/portTICK_RATE_MS) != pdTRUE) {
+          if(xSemaphoreTake(taskEndedSemaphoreArr[dMode], 3000/portTICK_RATE_MS) != pdTRUE)
+          {
             ESP_LOGW(TAG, "Wait for other task finish there job timeout!");
           }
           xTaskCreate(&sd_card_task, "sd_card_tsk",  4096, NULL, 6, NULL);
           // Trigger the SD Card task
-          if(xSemaphoreTake(sdTskEndedSemaphore, 3000/portTICK_RATE_MS) != pdTRUE) {
+          if(xSemaphoreTake(sdTskEndedSemaphore, 3000/portTICK_RATE_MS) != pdTRUE)
+          {
             ESP_LOGW(TAG, "Wait for sd card I/O task finish its job timeout!");
           }
           // Restart the old task where we stopped

@@ -53,7 +53,7 @@ class Adafruit_PCD8544 : public Adafruit_GFX {
 
   void begin(uint8_t contrast = 40, uint8_t bias = 0x04);
   // Stop the SPI Communication, because of sharing the same SPI bus with SD card
-  void stop();
+  esp_err_t stop();
   
   void command(uint8_t c);
   void data(uint8_t c);

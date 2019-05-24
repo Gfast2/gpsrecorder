@@ -151,8 +151,12 @@ void tsk_sd_getcoordinate(void *pvParameters){
               "Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
       }
       ESP_LOGE(TAG, "Terminate SD Card Task and let the code ride along");
-      // TODO: Send notification to display, even error happened here.
-      coordinateSaveSucceed = false;
+      char noRecord[] = "Can not mount SD Card => can not read GPS Coordinate!";
+      if( xQueueSend( lastTwoCoordRecord, ( void * ) noRecord,
+          2000/portTICK_PERIOD_MS ) != pdPASS ){
+          /* Failed to post the message, even after 2 second. */
+        ESP_LOGE(TAG, "Error happened when waiting for queue available for sd => display message");
+      }
       xSemaphoreGive(sdTskEndedSemaphore);
       vTaskDelete(NULL);
   }
@@ -166,12 +170,16 @@ void tsk_sd_getcoordinate(void *pvParameters){
       ESP_LOGE(TAG, "Failed to open file for reading");
       ESP_LOGE(TAG, "Terminate SD Card Task and let the code ride along");
       // TODO: Send notification to display, even error happened here.
-      coordinateSaveSucceed = false;
+      char noRecord[] = "Can not finde GPS record file => No GPS record!";
+      if( xQueueSend
+          (lastTwoCoordRecord,( void * ) noRecord,2000/portTICK_PERIOD_MS )
+          != pdPASS ){
+          /* Failed to post the message, even after 2 second. */
+        ESP_LOGE(TAG, "Error happened when waiting for queue available for sd => display message");
+      }
       xSemaphoreGive(sdTskEndedSemaphore);
       vTaskDelete(NULL);
   }
-
-  // TODO: Read the last two line, put the result into a notification
 
   // Read the last line content
   // Each line will have max. 45 Characters (on 2019-5-10), so define a 55 c Buffer
@@ -224,14 +232,9 @@ void tsk_sd_getcoordinate(void *pvParameters){
     }
   }
 
-//  ESP_LOGI(TAG, "Read from file: '%s'", last_line);
-
   // All done, unmount partition and disable SDMMC or SPI peripheral
   esp_vfs_fat_sdmmc_unmount();
   ESP_LOGI(TAG, "Now Sd card finish its job!");
-//  coordinateSaveSucceed = true;
-//  xSemaphoreGive(sdTskEndedSemaphore);
   ESP_LOGI(TAG, "Now kick start the display!");
-//  xTaskCreate(&task_disp_coordinate, "task_disp_coordiate", 8048, pvParameters, 5, NULL);
   vTaskDelete(NULL);
 }
