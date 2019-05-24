@@ -15,7 +15,7 @@ follow:
 
 _For Version 1.1.0_
 - Move Temperature Logic into its own unit
-- Bugger the driver of the Display, make the Display preserve its content during display spi bus unmounted
+- Bugger the driver of the Display, make the Display preserve its content during display spi bus unmounted & showing "Switching to next stage"
 - Make a logo for this project
 
 _For Version 1.2.0_
@@ -54,3 +54,5 @@ _For Version 1.3.0_
 - 2019-5-18: Display mode "Display Speed" (km/h)
 - 2019-5-18: Display mode "Time" (Time, Month & Dan are bigger Font, Year are small font)
 - 2019-5-22: Display mode "Last two recorded coordinate"
+- 2019-5-24: Move snapshot logic into a abstracted event handler (a function)
+- 2019-5-24: Move switching next mode logic into a abstracted event handler (a function)

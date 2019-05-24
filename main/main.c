@@ -314,6 +314,21 @@ void snapshot_handler(){
   (*startCertainMode[dMode])(); // Restart the old task where we stopped
 }
 
+void mode_switch_handler(){
+  ESP_LOGI(TAG, "dMode=%d", dMode);
+  (*stopCertainMode[dMode])();
+  if(xSemaphoreTake(taskEndedSemaphoreArr[dMode], 3000/portTICK_RATE_MS) != pdTRUE) {
+    ESP_LOGW(TAG, "Wait for other task finish there job timeout!");
+  }
+  ESP_LOGI(TAG, "Finish Stopping");
+  if(dMode == TOTALMODE-1) {
+    dMode = 0;
+  } else {
+    dMode++;
+  }
+  (*startCertainMode[dMode])();
+}
+
 void app_main(void)
 {
 	//xTaskCreatePinnedToCore(&task_scroll_text, "task_simple_tests_pcd8544", 8048, NULL, 5, NULL, 0);
@@ -362,12 +377,11 @@ void app_main(void)
   int btn_now = 0;
   uint32_t btn_long_press_old = 0;
   // Flag marking if btn press a long press to preventing long press trigger a
-  // short btn press event either.
+  // short btn press event at the same time.
   int longPressFlag = false;
   while(1) {
     btn_now = gpio_get_level(BTN);
     if(btn_now != btn_old){
-//      ESP_LOGI(TAG, "Get New State");
       if(btn_now == 1){ // btn pressed down
         ESP_LOGI(TAG, "BTN get pressed down.");
         btn_long_press_old = xTaskGetTickCount();
@@ -386,27 +400,10 @@ void app_main(void)
       btn_long_press_old = xTaskGetTickCount();
     }
     else if(btn_now == 1) { // Check if this is a long press btn event
-//      ESP_LOGI(TAG, "newTick: %lu, oldTick: %lu, check resolution: %lu millisec.",
-//          (unsigned long)xTaskGetTickCount(), (unsigned long)btn_long_press_old,
-//          (unsigned long)(1000/portTICK_PERIOD_MS)
-//          );
-
       // When the button get released after more then 1 second, then go to the next display mode.
       if(abs(xTaskGetTickCount()-btn_long_press_old) > 1000/portTICK_PERIOD_MS){
         ESP_LOGI(TAG, "long btn press get triggered");
-        ESP_LOGI(TAG, "dMode=%d", dMode);
-        (*stopCertainMode[dMode])();
-        ESP_LOGI(TAG, "Finish Stopping");
-        if(xSemaphoreTake(taskEndedSemaphoreArr[dMode], 3000/portTICK_RATE_MS) != pdTRUE) {
-          ESP_LOGW(TAG, "Wait for other task finish there job timeout!");
-        }
-        ESP_LOGI(TAG, "dMode=%d", dMode);
-        if(dMode == 4) { // TODO: Audo detect how many mode right now available
-          dMode = 0;
-        } else {
-          dMode++;
-        }
-        (*startCertainMode[dMode])();
+        mode_switch_handler();
         btn_long_press_old=xTaskGetTickCount(); // Update timer preparing trigger the next long btn press event
         longPressFlag = true;
       }

@@ -8,6 +8,9 @@
 #include "string.h"
 #include "msg_type.h"
 
+// View mode in total
+#define TOTALMODE 5
+
 bme280Info bInfo; // temperature, air pressure & humidity info
 
 // 1 -> loop in bme280 task should going on, 0 -> stop loop ASAP
@@ -20,16 +23,16 @@ int loopholder_display;
 gps_t * gps;
 
 // binarySemaphore Array to flagging if certain task ended.
-SemaphoreHandle_t taskEndedSemaphoreArr [5]; // xSemaphoreCreateBinary();
+SemaphoreHandle_t taskEndedSemaphoreArr [TOTALMODE]; // xSemaphoreCreateBinary();
 SemaphoreHandle_t sdTskEndedSemaphore;
 
 // Function pointer array defining "stop right now mode"
 // fun_ptr is a pointer to function fun()
 //void (*fun_ptr)(int) = &fun;
-void(*stopCertainMode[5])(void); // length is the same as "enum displayMode"
+void(*stopCertainMode[TOTALMODE])(void); // length is the same as "enum displayMode"
 
 // Function pointer array defining "start certain mode"
-void(*startCertainMode[5])(void); // length is the same as "enum displayMode"
+void(*startCertainMode[TOTALMODE])(void); // length is the same as "enum displayMode"
 
 // Which display mode we are in right now
 int dMode;
