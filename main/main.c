@@ -210,7 +210,7 @@ void task_bme280_forced_mode(void *ignore) {
 
 //static char tag[] = "mpcd";
 
-extern void sd_card_task(void *pvParameters);
+extern void tsk_coord_save(void *pvParameters);
 extern void gps_clock_task(void *pvParameters);
 extern void tsk_disp_temp(void *pvParameters);
 extern void task_disp_gps(void *pvParameters);
@@ -296,6 +296,24 @@ void start_mode_coordinate(void) {
   xTaskCreate(&task_disp_coordinate, "task_disp_coordiate", 8048, &loopholder_display, 5, NULL);
 }
 
+// Handling a GPS Coordinate snapshot event
+void snapshot_handler(){
+  snapshotFlag = true;
+  (*stopCertainMode[dMode])(); // Stop right now task(s)
+  if(xSemaphoreTake(taskEndedSemaphoreArr[dMode],
+      3000/portTICK_RATE_MS) != pdTRUE)
+  {
+    ESP_LOGW(TAG, "Wait for other task finish there job timeout!");
+  }
+  // Trigger the SD Card task
+  xTaskCreate(&tsk_coord_save, "tsk_coord_save",  4096, NULL, 6, NULL);
+  if(xSemaphoreTake(sdTskEndedSemaphore, 3000/portTICK_RATE_MS) != pdTRUE)
+  {
+    ESP_LOGW(TAG, "Wait for sd card I/O task finish its job timeout!");
+  }
+  (*startCertainMode[dMode])(); // Restart the old task where we stopped
+}
+
 void app_main(void)
 {
 	//xTaskCreatePinnedToCore(&task_scroll_text, "task_simple_tests_pcd8544", 8048, NULL, 5, NULL, 0);
@@ -356,27 +374,12 @@ void app_main(void)
         longPressFlag = false;
       } else { // btn released
         ESP_LOGI(TAG, "BTN get released.");
-        // When the button get released in less then 1 second, do the gps coordinate snapshot
+        // When button get released in <1 second, do the gps coordinate snapshot
         if(abs(xTaskGetTickCount()-btn_long_press_old) < 1000/portTICK_PERIOD_MS
             && !longPressFlag)
-        { // time to make a gps snapshot
+        {
           ESP_LOGI(TAG, "Triggered a snapshot");
-          snapshotFlag = true;
-          // Trigger a snapshot.
-          // Stop the right now mode (Kill tasks that should be stopped)
-          (*stopCertainMode[dMode])();
-          if(xSemaphoreTake(taskEndedSemaphoreArr[dMode], 3000/portTICK_RATE_MS) != pdTRUE)
-          {
-            ESP_LOGW(TAG, "Wait for other task finish there job timeout!");
-          }
-          xTaskCreate(&sd_card_task, "sd_card_tsk",  4096, NULL, 6, NULL);
-          // Trigger the SD Card task
-          if(xSemaphoreTake(sdTskEndedSemaphore, 3000/portTICK_RATE_MS) != pdTRUE)
-          {
-            ESP_LOGW(TAG, "Wait for sd card I/O task finish its job timeout!");
-          }
-          // Restart the old task where we stopped
-          (*startCertainMode[dMode])();
+          snapshot_handler();
         }
       }
       btn_old = btn_now;

@@ -29,10 +29,8 @@ static const char *TAG = "SD_CARD";
 #define PIN_NUM_CLK  14
 #define PIN_NUM_CS   13
 
-extern void task_disp_coordinate(void *pvParameters);
-
 // Save right now GPS Coordinate into sd card
-void sd_card_task(void *pvParameters){
+void tsk_coord_save(void *pvParameters){
   ESP_LOGI(TAG, "Initializing SD card");
 //  ESP_LOGI(TAG, "Using SPI peripheral");
 

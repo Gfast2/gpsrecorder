@@ -37,7 +37,8 @@ int dMode;
 // Save SD Card failed or succeed, boolean
 int coordinateSaveSucceed;
 
-// trigger a snapshot flag, when trigger a snapshot, flip this to true
+// trigger a snapshot flag, when trigger a snapshot, flip this to true. This
+// will signal to show a snapshot screen when a display task start
 int snapshotFlag;
 
 // Temperature task

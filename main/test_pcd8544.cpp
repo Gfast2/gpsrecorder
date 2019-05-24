@@ -114,7 +114,6 @@ void tsk_disp_temp(void *pvParameters) {
   display.begin();
   display.setContrast(60);
   display.setCursor(0,0);
-  // TODO: Detect if made a snapshot, if yes, show sd card i/o result
   showSDCardIOResult();
   display.setTextColor(WHITE, BLACK); // 'inverted' text
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
@@ -172,7 +171,6 @@ void task_disp_gps(void *pvParameters) {
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
   ESP_LOGI(TAG, "Display Initialization Task All done!");
 
-
   ESP_LOGI(TAG, "Display GPS information.");
   // TODO: Available satellites
   display.clearDisplay();
@@ -219,7 +217,6 @@ void task_disp_gps(void *pvParameters) {
   vTaskDelete(NULL);
 }
 
-
 // Display GPS speed
 void task_disp_speed(void *pvParameters) {
   display.begin(); // parameter is garbage
@@ -231,12 +228,10 @@ void task_disp_speed(void *pvParameters) {
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
   ESP_LOGI(TAG, "Display Initialization Task All done!");
 
-
   ESP_LOGI(TAG, "Display Speed.");
   // TODO: Available satellites
   display.clearDisplay();
   display.setTextSize(2);
-//  display.setTextColor(BLACK);
   while(*( (int *)pvParameters ) == 1) {
     if(gps->semaphore_gps == NULL) {
       ESP_LOGI(TAG, "Waiting for GPS info comming.");

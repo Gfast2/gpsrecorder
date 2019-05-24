@@ -14,10 +14,9 @@ follow:
 # Road Map
 
 _For Version 1.1.0_
-- Display mode "Last two recorded coordinate"
+- Move Temperature Logic into its own unit
 - Bugger the driver of the Display, make the Display preserve its content during display spi bus unmounted
 - Make a logo for this project
-- Move Temperature Logic into its own unit
 
 _For Version 1.2.0_
 - Try to map psram into map look-up table
@@ -54,3 +53,4 @@ _For Version 1.3.0_
 ### Version 1.1.0
 - 2019-5-18: Display mode "Display Speed" (km/h)
 - 2019-5-18: Display mode "Time" (Time, Month & Dan are bigger Font, Year are small font)
+- 2019-5-22: Display mode "Last two recorded coordinate"
