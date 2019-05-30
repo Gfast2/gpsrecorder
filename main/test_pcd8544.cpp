@@ -276,7 +276,7 @@ void task_disp_timedate(void *pvParameters) {
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
   ESP_LOGI(TAG, "Display Initialization Task All done!");
 
-  ESP_LOGI(TAG, "Display Speed.");
+  ESP_LOGI(TAG, "Display timedate.");
   display.clearDisplay();
   display.setTextSize(2);
   while(*( (int *)pvParameters ) == 1) {
@@ -298,8 +298,10 @@ void task_disp_timedate(void *pvParameters) {
     int ret = snprintf(buf, sizeof buf, "%d-%d-%d", gps->year, gps->month, gps->day);
     println(buf);
     display.setTextSize(2);
-    ret = snprintf(buf, sizeof buf, "%d:%d:%d", gps->hour, gps->minute, gps->second);
-    print(buf);
+    ret = snprintf(buf, sizeof buf, "%d:%d", gps->hour, gps->minute);
+    println(buf);
+    ret = snprintf(buf, sizeof buf, "%d", gps->second);
+    println(buf);
     display.display();
     xSemaphoreGive(gps->semaphore_gps);
     vTaskDelay(1000/portTICK_RATE_MS);
