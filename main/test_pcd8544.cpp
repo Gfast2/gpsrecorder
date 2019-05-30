@@ -86,7 +86,7 @@ static int min(int a, int b) {
 }
 
 void showSDCardIOResult() {
-//  ESP_LOGI(TAG, "Hallo There !!!!!!!!!!!!!!!!!!!!!!!!!!!, snapshotFlag: %d", snapshotFlag);
+//  ESP_LOGI(TAG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!, snapshotFlag: %d", snapshotFlag);
   if(snapshotFlag) {
     display.display();
     display.clearDisplay();
@@ -95,10 +95,8 @@ void showSDCardIOResult() {
     println("card");
     println("save");
     if(coordinateSaveSucceed) {
-      ESP_LOGI(TAG, "Save coordinate to sd card succeed");
       println("OK");
     } else {
-      ESP_LOGI(TAG, "Save coordinate to sd card failed");
       println("failed");
     }
     display.display();
@@ -109,16 +107,19 @@ void showSDCardIOResult() {
   display.setCursor(0,0);
 }
 
-void tsk_disp_temp(void *pvParameters) {
-
+// Initialize display
+void initDisp() {
   display.begin();
   display.setContrast(60);
-  display.setCursor(0,0);
-  showSDCardIOResult();
-  display.setTextColor(WHITE, BLACK); // 'inverted' text
   display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
+  showSDCardIOResult();
+  display.clearDisplay();
   ESP_LOGI(TAG, "Display Initialization Task All done!");
+}
 
+void tsk_disp_temp(void *pvParameters) {
+  initDisp();
+  display.setTextColor(WHITE, BLACK); // 'inverted' text
   ESP_LOGW(TAG, "task 'tsk_disp_temp' started");
   while(*( (int *)pvParameters ) == 1) {
     if( bInfo.semaphore_bme280 == NULL) {
@@ -161,19 +162,8 @@ void tsk_disp_temp(void *pvParameters) {
 
 // Display GPS Informations
 void task_disp_gps(void *pvParameters) {
-
-  display.begin(); // parameter is garbage
-  display.setContrast(60);
-  showSDCardIOResult();
-  display.clearDisplay();
-  display.setCursor(0,0);
-  display.setTextColor(WHITE, BLACK); // 'inverted' text
-  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
-  ESP_LOGI(TAG, "Display Initialization Task All done!");
-
+  initDisp();
   ESP_LOGI(TAG, "Display GPS information.");
-  // TODO: Available satellites
-  display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(BLACK);
   while(*( (int *)pvParameters ) == 1) {
@@ -219,19 +209,10 @@ void task_disp_gps(void *pvParameters) {
 
 // Display GPS speed
 void task_disp_speed(void *pvParameters) {
-  display.begin(); // parameter is garbage
-  display.setContrast(60);
-  showSDCardIOResult();
-  display.clearDisplay();
-  display.setCursor(0,0);
+  initDisp();
   display.setTextColor(WHITE, BLACK); // 'inverted' text
-  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
-  ESP_LOGI(TAG, "Display Initialization Task All done!");
-
-  ESP_LOGI(TAG, "Display Speed.");
-  // TODO: Available satellites
-  display.clearDisplay();
   display.setTextSize(2);
+  ESP_LOGI(TAG, "Display Speed.");
   while(*( (int *)pvParameters ) == 1) {
     if(gps->semaphore_gps == NULL) {
       ESP_LOGI(TAG, "Waiting for GPS info comming.");
@@ -255,7 +236,7 @@ void task_disp_speed(void *pvParameters) {
     print(buf);
     display.display();
     xSemaphoreGive(gps->semaphore_gps);
-    ESP_LOGI(TAG, "Speed: %.1f", gps->speed_kph);
+//    ESP_LOGI(TAG, "Speed: %.1f", gps->speed_kph);
     vTaskDelay(1000/portTICK_RATE_MS);
   }
   display.clearDisplay();
@@ -267,18 +248,10 @@ void task_disp_speed(void *pvParameters) {
 
 // Display time & date
 void task_disp_timedate(void *pvParameters) {
-  display.begin(); // parameter is garbage
-  display.setContrast(60);
-  showSDCardIOResult();
-  display.clearDisplay();
-  display.setCursor(0,0);
+  initDisp();
   display.setTextColor(WHITE, BLACK); // 'inverted' text
-  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
-  ESP_LOGI(TAG, "Display Initialization Task All done!");
-
-  ESP_LOGI(TAG, "Display timedate.");
-  display.clearDisplay();
   display.setTextSize(2);
+  ESP_LOGI(TAG, "Display timedate.");
   while(*( (int *)pvParameters ) == 1) {
     if(gps->semaphore_gps == NULL) {
       ESP_LOGI(TAG, "Waiting for GPS info comming.");
@@ -315,22 +288,13 @@ void task_disp_timedate(void *pvParameters) {
 
 // Display in sd card save gps coordinate
 void task_disp_coordinate(void *pvParameters) {
-  display.begin(); // parameter is garbage
-  display.setContrast(60);
-  showSDCardIOResult();
-  display.clearDisplay();
-  display.setCursor(0,0);
+  initDisp();
   display.setTextColor(WHITE, BLACK); // 'inverted' text
-  display.setRotation(2);  // rotate 90 degrees counter clockwise, can also use values of 2 and 3 to go further.
-  ESP_LOGI(TAG, "Display Initialization Task All done!");
-
-
-  ESP_LOGI(TAG, "Display sd card save coordinate.");
-  display.clearDisplay();
   display.setTextSize(1);
+  ESP_LOGI(TAG, "Display sd card save coordinate.");
+  // Here is a little special, because we need to show waiting text here.
   println((char *)"Processing...");
   display.display();
-  ESP_LOGI(TAG, "value of pvParameters: %d",*(int *)pvParameters);
   while(*(int *)pvParameters == 1) { // Call this global defined variable in such a direct manner is absolute bad practice, refactorying this!
     display.clearDisplay();
     // TODO: Read notification from SD card read last two record task!

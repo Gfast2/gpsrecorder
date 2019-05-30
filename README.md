@@ -14,9 +14,8 @@ follow:
 # Road Map
 
 _For Version 1.1.0_
-- Move Temperature Logic into its own unit
-- Bugger the driver of the Display, make the Display preserve its content during display spi bus unmounted & showing "Switching to next stage"
 - Make a logo for this project
+- Try to fix bug when in _SPEED_ mode, can not make a gps coordinate save
 
 _For Version 1.2.0_
 - Try to map psram into map look-up table
@@ -56,3 +55,6 @@ _For Version 1.3.0_
 - 2019-5-22: Display mode "Last two recorded coordinate"
 - 2019-5-24: Move snapshot logic into a abstracted event handler (a function)
 - 2019-5-24: Move switching next mode logic into a abstracted event handler (a function)
+- 2019-5-25: Move Temperature Logic into its own unit
+- **Won't do**: Bugger the driver of the Display, make the Display preserve its content during display spi bus unmounted & showing "Switching to next stage" (Because no more remember why its needed)
+- 2019-5-30: Clean up code in unit "test_pcd8544.cpp" (abstract display mode start initialization into "initDisp()")
