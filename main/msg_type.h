@@ -122,7 +122,7 @@ typedef struct {
 enum displayMode {
   TEMPERATUREANDHUMDIDITY = 0,
   GPS_INFO_DETAIL,
-  SPEED,
+  SPEED_INF,
   DATETIME,
   SAVEDCOORDINATE,
 };

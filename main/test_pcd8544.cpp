@@ -210,8 +210,8 @@ void task_disp_gps(void *pvParameters) {
 // Display GPS speed
 void task_disp_speed(void *pvParameters) {
   initDisp();
-  display.setTextColor(WHITE, BLACK); // 'inverted' text
-  display.setTextSize(2);
+//  display.setTextColor(WHITE, BLACK); // 'inverted' text
+  display.setTextColor(BLACK); // 'inverted' text
   ESP_LOGI(TAG, "Display Speed.");
   while(*( (int *)pvParameters ) == 1) {
     if(gps->semaphore_gps == NULL) {
@@ -228,10 +228,10 @@ void task_disp_speed(void *pvParameters) {
     display.setTextSize(2);
     println((char *)"Speed:");
     char buf [25];
-    display.setTextSize(3);
+//    display.setTextSize(3);
     int ret = snprintf(buf, sizeof buf, "%.1f", gps->speed_kph);
     println(buf);
-    display.setTextSize(1);
+//    display.setTextSize(1);
     ret = snprintf(buf, sizeof buf, "km/h");
     print(buf);
     display.display();
@@ -242,7 +242,7 @@ void task_disp_speed(void *pvParameters) {
   display.clearDisplay();
   display.stop();
   ESP_LOGI(TAG, "Display speed Task terminated.");
-  xSemaphoreGive(taskEndedSemaphoreArr[SPEED]);
+  xSemaphoreGive(taskEndedSemaphoreArr[SPEED_INF]);
   vTaskDelete(NULL);
 }
 

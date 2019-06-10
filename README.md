@@ -13,10 +13,6 @@ follow:
 
 # Road Map
 
-_For Version 1.1.0_
-- Make a logo for this project
-- Try to fix bug when in _SPEED_ mode, can not make a gps coordinate save
-
 _For Version 1.2.0_
 - Try to map psram into map look-up table
 - Wifi access point setup (DHCP Server Included)
@@ -58,3 +54,5 @@ _For Version 1.3.0_
 - 2019-5-25: Move Temperature Logic into its own unit
 - **Won't do**: Bugger the driver of the Display, make the Display preserve its content during display spi bus unmounted & showing "Switching to next stage" (Because no more remember why its needed)
 - 2019-5-30: Clean up code in unit "test_pcd8544.cpp" (abstract display mode start initialization into "initDisp()")
+- 2019-6-10: Make a logo for this project (foto see: "/doc/logo_design_20190610_081207.jpg")
+- 2019-6-10: Try to fix bug when in _SPEED_ mode, can not make a gps coordinate save (When display speed in size '3' and make font what text black background, there is something works not that great, so as workaround, show text in font size '3' & make it black text & what background)
